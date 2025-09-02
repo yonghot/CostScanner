@@ -47,7 +47,7 @@ export default function IngredientsPageRoute() {
           ? {
               ...ingredient,
               ...formData,
-              lastUpdated: new Date().toISOString().split('T')[0]
+              updated_at: new Date().toISOString()
             }
           : ingredient
       ));

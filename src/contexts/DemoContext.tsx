@@ -136,7 +136,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const newIngredient: Ingredient = {
       ...ingredientData,
       id: `demo-ingredient-${Date.now()}`,
-      lastUpdated: new Date().toISOString().split('T')[0]
+      updated_at: new Date().toISOString()
     }
     
     setDemoState(prev => ({
@@ -150,7 +150,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       ...prev,
       ingredients: prev.ingredients.map(ingredient =>
         ingredient.id === id 
-          ? { ...ingredient, ...updates, lastUpdated: new Date().toISOString().split('T')[0] }
+          ? { ...ingredient, ...updates, updated_at: new Date().toISOString() }
           : ingredient
       )
     }))
@@ -168,7 +168,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const newRecipe: Recipe = {
       ...recipeData,
       id: `demo-recipe-${Date.now()}`,
-      lastUpdated: new Date().toISOString().split('T')[0]
+      updated_at: new Date().toISOString()
     }
     
     setDemoState(prev => ({
@@ -182,7 +182,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       ...prev,
       recipes: prev.recipes.map(recipe =>
         recipe.id === id 
-          ? { ...recipe, ...updates, lastUpdated: new Date().toISOString().split('T')[0] }
+          ? { ...recipe, ...updates, updated_at: new Date().toISOString() }
           : recipe
       )
     }))

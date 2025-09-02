@@ -26,17 +26,17 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
   const filteredIngredients = ingredients.filter(ingredient => {
     if (filters.category && ingredient.category !== filters.category) return false;
     if (filters.status && ingredient.status !== filters.status) return false;
-    if (filters.priceRange) {
-      const { min, max } = filters.priceRange;
-      if (ingredient.currentPrice < min || ingredient.currentPrice > max) return false;
+    if (filters.price_range) {
+      const { min, max } = filters.price_range;
+      if (ingredient.current_price < min || ingredient.current_price > max) return false;
     }
     return true;
   });
 
   // Sort ingredients
   const sortedIngredients = [...filteredIngredients].sort((a, b) => {
-    const aValue = a[sort.field as keyof Ingredient];
-    const bValue = b[sort.field as keyof Ingredient];
+    const aValue = a[sort.field as keyof IngredientUI];
+    const bValue = b[sort.field as keyof IngredientUI];
     
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return sort.direction === 'asc' 
@@ -58,10 +58,10 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
     }));
   };
 
-  const getPriceChange = (ingredient: Ingredient) => {
-    if (ingredient.priceHistory.length < 2) return 0;
-    const current = ingredient.priceHistory[ingredient.priceHistory.length - 1].price;
-    const previous = ingredient.priceHistory[ingredient.priceHistory.length - 2].price;
+  const getPriceChange = (ingredient: IngredientUI) => {
+    if (ingredient.price_history.length < 2) return 0;
+    const current = ingredient.price_history[ingredient.price_history.length - 1].price;
+    const previous = ingredient.price_history[ingredient.price_history.length - 2].price;
     return ((current - previous) / previous) * 100;
   };
 
@@ -112,13 +112,13 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
             </label>
             <input
               type="number"
-              value={filters.priceRange?.min || ''}
+              value={filters.price_range?.min || ''}
               onChange={(e) => setFilters(prev => ({
                 ...prev,
-                priceRange: {
-                  ...prev.priceRange,
+                price_range: {
+                  ...prev.price_range,
                   min: e.target.value ? parseInt(e.target.value) : 0,
-                  max: prev.priceRange?.max || Infinity
+                  max: prev.price_range?.max || Infinity
                 }
               }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
@@ -132,11 +132,11 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
             </label>
             <input
               type="number"
-              value={filters.priceRange?.max === Infinity ? '' : filters.priceRange?.max || ''}
+              value={filters.price_range?.max === Infinity ? '' : filters.price_range?.max || ''}
               onChange={(e) => setFilters(prev => ({
                 ...prev,
-                priceRange: {
-                  min: prev.priceRange?.min || 0,
+                price_range: {
+                  min: prev.price_range?.min || 0,
                   max: e.target.value ? parseInt(e.target.value) : Infinity
                 }
               }))}
@@ -176,10 +176,10 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('currentPrice')}
+                  onClick={() => handleSort('current_price')}
                 >
                   현재 가격
-                  {sort.field === 'currentPrice' && (
+                  {sort.field === 'current_price' && (
                     <span className="ml-1">
                       {sort.direction === 'asc' ? '↑' : '↓'}
                     </span>
@@ -193,10 +193,10 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('lastUpdated')}
+                  onClick={() => handleSort('updated_at')}
                 >
                   최근 업데이트
-                  {sort.field === 'lastUpdated' && (
+                  {sort.field === 'updated_at' && (
                     <span className="ml-1">
                       {sort.direction === 'asc' ? '↑' : '↓'}
                     </span>
@@ -229,7 +229,7 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatPrice(ingredient.currentPrice)}
+                        {formatPrice(ingredient.current_price)}
                       </div>
                       <div className="text-xs text-gray-500">
                         /{ingredient.unit}
@@ -248,15 +248,15 @@ export default function IngredientsTable({ ingredients, onEdit, onDelete }: Ingr
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(ingredient.status)}`}>
                           {getStatusLabel(ingredient.status)}
                         </span>
-                        {ingredient.stockLevel !== undefined && (
+                        {ingredient.stock_level !== undefined && (
                           <span className="text-xs text-gray-500">
-                            {ingredient.stockLevel}{ingredient.unit}
+                            {ingredient.stock_level}{ingredient.unit}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(ingredient.lastUpdated)}
+                      {formatDate(ingredient.updated_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button

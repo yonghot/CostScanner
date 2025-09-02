@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Recipe, RecipeFormData, Ingredient } from '@/types';
+import { RecipeUI, RecipeFormData, Ingredient } from '@/types';
 import { recipeCategories, mockIngredients } from '@/lib/mock-data';
 import { formatPrice } from '@/lib/utils/formatting';
 
 interface RecipeFormProps {
-  recipe?: Recipe;
+  recipe?: RecipeUI;
   onSave: (data: RecipeFormData) => void;
   onCancel: () => void;
 }
@@ -17,10 +17,10 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
     category: '',
     servings: 1,
     ingredients: [],
-    sellingPrice: undefined,
+    selling_price: undefined,
     instructions: [],
-    prepTime: undefined,
-    cookTime: undefined,
+    prep_time: undefined,
+    cook_time: undefined,
     difficulty: undefined,
     tags: [],
   });
@@ -42,14 +42,14 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
         category: recipe.category,
         servings: recipe.servings,
         ingredients: recipe.ingredients.map(ing => ({
-          ingredientId: ing.ingredientId,
+          ingredient_id: ing.ingredient_id,
           quantity: ing.quantity,
           unit: ing.unit
         })),
-        sellingPrice: recipe.sellingPrice,
+        selling_price: recipe.selling_price,
         instructions: recipe.instructions || [],
-        prepTime: recipe.prepTime,
-        cookTime: recipe.cookTime,
+        prep_time: recipe.prep_time,
+        cook_time: recipe.cook_time,
         difficulty: recipe.difficulty,
         tags: recipe.tags || [],
       });
@@ -59,10 +59,10 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
   // Calculate costs whenever ingredients, servings, or selling price change
   useEffect(() => {
     const calculatedTotalCost = formData.ingredients.reduce((total, recipeIngredient) => {
-      const ingredient = mockIngredients.find(ing => ing.id === recipeIngredient.ingredientId);
+      const ingredient = mockIngredients.find(ing => ing.id === recipeIngredient.ingredient_id);
       if (!ingredient) return total;
       
-      return total + (ingredient.currentPrice * recipeIngredient.quantity);
+      return total + (ingredient.current_price * recipeIngredient.quantity);
     }, 0);
 
     const calculatedCostPerServing = formData.servings > 0 ? calculatedTotalCost / formData.servings : 0;
@@ -70,8 +70,8 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
     setTotalCost(calculatedTotalCost);
     setCostPerServing(calculatedCostPerServing);
 
-    if (formData.sellingPrice) {
-      const profit = formData.sellingPrice - calculatedCostPerServing;
+    if (formData.selling_price) {
+      const profit = formData.selling_price - calculatedCostPerServing;
       const margin = calculatedCostPerServing > 0 ? (profit / calculatedCostPerServing) * 100 : 0;
       
       setProfitAmount(profit * formData.servings);
@@ -80,7 +80,7 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
       setProfitAmount(0);
       setProfitMargin(0);
     }
-  }, [formData.ingredients, formData.servings, formData.sellingPrice]);
+  }, [formData.ingredients, formData.servings, formData.selling_price]);
 
   const validateForm = (): boolean => {
     const newErrors: any = {};
@@ -132,7 +132,7 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
 
       // Check if ingredient already exists
       const existingIndex = formData.ingredients.findIndex(
-        ing => ing.ingredientId === selectedIngredientId
+        ing => ing.ingredient_id === selectedIngredientId
       );
 
       if (existingIndex >= 0) {
@@ -145,7 +145,7 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
         handleInputChange('ingredients', [
           ...formData.ingredients,
           {
-            ingredientId: selectedIngredientId,
+            ingredient_id: selectedIngredientId,
             quantity: quantity,
             unit: ingredient.unit
           }
@@ -157,9 +157,9 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
     }
   };
 
-  const removeIngredient = (ingredientId: string) => {
+  const removeIngredient = (ingredient_id: string) => {
     handleInputChange('ingredients', 
-      formData.ingredients.filter(ing => ing.ingredientId !== ingredientId)
+      formData.ingredients.filter(ing => ing.ingredient_id !== ingredient_id)
     );
   };
 
@@ -278,8 +278,8 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                     </label>
                     <input
                       type="number"
-                      value={formData.prepTime || ''}
-                      onChange={(e) => handleInputChange('prepTime', parseInt(e.target.value) || undefined)}
+                      value={formData.prep_time || ''}
+                      onChange={(e) => handleInputChange('prep_time', parseInt(e.target.value) || undefined)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       min="0"
                     />
@@ -291,8 +291,8 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                     </label>
                     <input
                       type="number"
-                      value={formData.cookTime || ''}
-                      onChange={(e) => handleInputChange('cookTime', parseInt(e.target.value) || undefined)}
+                      value={formData.cook_time || ''}
+                      onChange={(e) => handleInputChange('cook_time', parseInt(e.target.value) || undefined)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       min="0"
                     />
@@ -322,8 +322,8 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                     </label>
                     <input
                       type="number"
-                      value={formData.sellingPrice || ''}
-                      onChange={(e) => handleInputChange('sellingPrice', parseInt(e.target.value) || undefined)}
+                      value={formData.selling_price || ''}
+                      onChange={(e) => handleInputChange('selling_price', parseInt(e.target.value) || undefined)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="원"
                       min="0"
@@ -346,13 +346,13 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                     <div>
                       <span className="text-gray-600">총 수익:</span>
                       <span className="ml-2 font-semibold text-green-600">
-                        {formData.sellingPrice ? formatPrice(profitAmount) : '-'}
+                        {formData.selling_price ? formatPrice(profitAmount) : '-'}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-600">수익률:</span>
                       <span className="ml-2 font-semibold text-primary">
-                        {formData.sellingPrice ? `${profitMargin.toFixed(1)}%` : '-'}
+                        {formData.selling_price ? `${profitMargin.toFixed(1)}%` : '-'}
                       </span>
                     </div>
                   </div>
@@ -376,7 +376,7 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                       <option value="">재료 선택</option>
                       {mockIngredients.map(ingredient => (
                         <option key={ingredient.id} value={ingredient.id}>
-                          {ingredient.name} ({formatPrice(ingredient.currentPrice)}/{ingredient.unit})
+                          {ingredient.name} ({formatPrice(ingredient.current_price)}/{ingredient.unit})
                         </option>
                       ))}
                     </select>
@@ -401,13 +401,13 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                   {/* Ingredients list */}
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {formData.ingredients.map((recipeIngredient) => {
-                      const ingredient = mockIngredients.find(ing => ing.id === recipeIngredient.ingredientId);
+                      const ingredient = mockIngredients.find(ing => ing.id === recipeIngredient.ingredient_id);
                       if (!ingredient) return null;
 
-                      const cost = ingredient.currentPrice * recipeIngredient.quantity;
+                      const cost = ingredient.current_price * recipeIngredient.quantity;
                       
                       return (
-                        <div key={recipeIngredient.ingredientId} className="flex items-center justify-between bg-white px-3 py-2 rounded-md border">
+                        <div key={recipeIngredient.ingredient_id} className="flex items-center justify-between bg-white px-3 py-2 rounded-md border">
                           <div className="flex-1">
                             <span className="text-sm font-medium text-gray-900">
                               {ingredient.name}
@@ -421,7 +421,7 @@ export default function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps
                           </div>
                           <button
                             type="button"
-                            onClick={() => removeIngredient(recipeIngredient.ingredientId)}
+                            onClick={() => removeIngredient(recipeIngredient.ingredient_id)}
                             className="text-red-600 hover:text-red-800"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

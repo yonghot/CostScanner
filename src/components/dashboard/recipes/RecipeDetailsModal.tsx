@@ -17,7 +17,7 @@ interface RecipeDetailsModalProps {
 }
 
 export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDetailsModalProps) {
-  const totalTime = (recipe.prepTime || 0) + (recipe.cookTime || 0);
+  const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -73,35 +73,35 @@ export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDe
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-gray-900">
-                      {formatPrice(recipe.totalCost)}
+                      {formatPrice(recipe.total_cost || 0)}
                     </div>
                     <div className="text-sm text-gray-600">총 원가</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">
-                      {formatPrice(recipe.costPerServing)}
+                      {formatPrice(recipe.cost_per_serving || 0)}
                     </div>
                     <div className="text-sm text-gray-600">인분당 원가</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {recipe.sellingPrice ? formatPrice(recipe.sellingPrice) : '-'}
+                      {recipe.selling_price ? formatPrice(recipe.selling_price) : '-'}
                     </div>
                     <div className="text-sm text-gray-600">판매가격</div>
                   </div>
                   <div className="text-center">
-                    <div className={`text-2xl font-bold ${getProfitColor(recipe.profitMargin || 0)}`}>
-                      {recipe.profitMargin ? `${recipe.profitMargin}%` : '-'}
+                    <div className={`text-2xl font-bold ${getProfitColor(recipe.profit_margin || 0)}`}>
+                      {recipe.profit_margin ? `${recipe.profit_margin}%` : '-'}
                     </div>
                     <div className="text-sm text-gray-600">수익률</div>
                   </div>
                 </div>
-                {recipe.profitAmount && (
+                {recipe.profit_amount && (
                   <div className="mt-4 text-center">
                     <div className="text-lg">
                       <span className="text-gray-600">총 수익: </span>
                       <span className="font-semibold text-green-600">
-                        {formatPrice(recipe.profitAmount)}
+                        {formatPrice(recipe.profit_amount)}
                       </span>
                     </div>
                   </div>
@@ -131,11 +131,11 @@ export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDe
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {recipe.ingredients.map((recipeIngredient) => {
-                        const ingredient = mockIngredients.find(ing => ing.id === recipeIngredient.ingredientId);
+                        const ingredient = mockIngredients.find(ing => ing.id === recipeIngredient.ingredient_id);
                         if (!ingredient) return null;
 
                         return (
-                          <tr key={recipeIngredient.ingredientId} className="hover:bg-gray-50">
+                          <tr key={recipeIngredient.ingredient_id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 text-sm font-medium text-gray-900">
                               {recipeIngredient.name}
                             </td>
@@ -143,7 +143,7 @@ export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDe
                               {recipeIngredient.quantity}{recipeIngredient.unit}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">
-                              {formatPrice(ingredient.currentPrice)}/{ingredient.unit}
+                              {formatPrice(ingredient.current_price)}/{ingredient.unit}
                             </td>
                             <td className="px-4 py-3 text-sm font-semibold text-green-600">
                               {formatPrice(recipeIngredient.cost)}
@@ -158,7 +158,7 @@ export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDe
                           총합
                         </td>
                         <td className="px-4 py-3 text-sm font-bold text-green-600">
-                          {formatPrice(recipe.totalCost)}
+                          {formatPrice(recipe.total_cost || 0)}
                         </td>
                       </tr>
                     </tfoot>
@@ -192,16 +192,16 @@ export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDe
               <div className="bg-white border rounded-lg p-4">
                 <h4 className="text-md font-semibold text-gray-900 mb-3">시간 정보</h4>
                 <div className="space-y-2 text-sm">
-                  {recipe.prepTime && (
+                  {recipe.prep_time && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">준비시간:</span>
-                      <span className="font-medium">{formatTime(recipe.prepTime)}</span>
+                      <span className="font-medium">{formatTime(recipe.prep_time)}</span>
                     </div>
                   )}
-                  {recipe.cookTime && (
+                  {recipe.cook_time && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">조리시간:</span>
-                      <span className="font-medium">{formatTime(recipe.cookTime)}</span>
+                      <span className="font-medium">{formatTime(recipe.cook_time)}</span>
                     </div>
                   )}
                   {totalTime > 0 && (
@@ -244,33 +244,33 @@ export default function RecipeDetailsModal({ recipe, onClose, onEdit }: RecipeDe
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">최종 수정:</span>
-                    <span className="font-medium">{recipe.lastUpdated}</span>
+                    <span className="font-medium">{recipe.updated_at}</span>
                   </div>
                 </div>
               </div>
 
               {/* Profit Analysis */}
-              {recipe.sellingPrice && (
+              {recipe.selling_price && (
                 <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
                   <h4 className="text-md font-semibold text-green-900 mb-3">수익성 분석</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-green-700">인분당 이익:</span>
                       <span className="font-bold text-green-800">
-                        {recipe.profitAmount && recipe.servings ? 
-                          formatPrice(recipe.profitAmount / recipe.servings) : '-'}
+                        {recipe.profit_amount && recipe.servings ? 
+                          formatPrice(recipe.profit_amount / recipe.servings) : '-'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-green-700">총 이익:</span>
                       <span className="font-bold text-green-800">
-                        {recipe.profitAmount ? formatPrice(recipe.profitAmount) : '-'}
+                        {recipe.profit_amount ? formatPrice(recipe.profit_amount) : '-'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-green-700">수익률:</span>
-                      <span className={`font-bold ${getProfitColor(recipe.profitMargin || 0)}`}>
-                        {recipe.profitMargin ? `${recipe.profitMargin.toFixed(1)}%` : '-'}
+                      <span className={`font-bold ${getProfitColor(recipe.profit_margin || 0)}`}>
+                        {recipe.profit_margin ? `${recipe.profit_margin.toFixed(1)}%` : '-'}
                       </span>
                     </div>
                   </div>

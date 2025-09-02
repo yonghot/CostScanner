@@ -17,7 +17,7 @@ import {
 // 모의 가격 히스토리 생성 함수
 function generatePriceHistory(basePrice: number, days: number = 30): PricePoint[] {
   const history: PricePoint[] = [];
-  let currentPrice = basePrice;
+  let current_price = basePrice;
   
   for (let i = days; i >= 0; i--) {
     const date = new Date();
@@ -25,11 +25,11 @@ function generatePriceHistory(basePrice: number, days: number = 30): PricePoint[
     
     // 5% 내외의 랜덤한 가격 변동
     const variation = (Math.random() - 0.5) * 0.1;
-    currentPrice = Math.max(basePrice * (1 + variation), basePrice * 0.7);
+    current_price = Math.max(basePrice * (1 + variation), basePrice * 0.7);
     
     history.push({
       date: date.toISOString().split('T')[0],
-      price: Math.round(currentPrice),
+      price: Math.round(current_price),
       supplier: i % 3 === 0 ? '신선마트' : i % 3 === 1 ? '도매시장' : '농협'
     });
   }
@@ -41,120 +41,128 @@ function generatePriceHistory(basePrice: number, days: number = 30): PricePoint[
 export const mockIngredients: Ingredient[] = [
   {
     id: 'ing_001',
+    created_at: '2024-08-20',
     name: '한우등심',
     category: '육류',
     unit: 'kg',
-    currentPrice: 45000,
-    priceHistory: generatePriceHistory(45000),
+    current_price: 45000,
+    price_history: generatePriceHistory(45000),
     suppliers: ['한우마을', '프리미엄정육점', '축산물유통센터'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 15,
-    minStockLevel: 5,
+    updated_at: '2024-08-27',
+    stock_level: 15,
+    min_stock_level: 5,
     status: 'available',
     is_active: true,
     description: '1등급 한우등심, 마블링 우수'
   },
   {
     id: 'ing_002',
+    created_at: '2024-08-20',
     name: '대패삼겹살',
     category: '육류',
     unit: 'kg',
-    currentPrice: 12000,
-    priceHistory: generatePriceHistory(12000),
+    current_price: 12000,
+    price_history: generatePriceHistory(12000),
     suppliers: ['신선마트', '도매시장'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 8,
-    minStockLevel: 10,
+    updated_at: '2024-08-27',
+    stock_level: 8,
+    min_stock_level: 10,
     status: 'low_stock',
     is_active: true,
     description: '국산 돼지고기, 얇게 슬라이스'
   },
   {
     id: 'ing_003',
+    created_at: '2024-08-20',
     name: '양파',
     category: '채소',
     unit: 'kg',
-    currentPrice: 3500,
-    priceHistory: generatePriceHistory(3500),
+    current_price: 3500,
+    price_history: generatePriceHistory(3500),
     suppliers: ['농협', '도매시장', '신선마트'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 50,
-    minStockLevel: 20,
+    updated_at: '2024-08-27',
+    stock_level: 50,
+    min_stock_level: 20,
     status: 'available',
     is_active: true,
     description: '국산 양파, 중간 크기'
   },
   {
     id: 'ing_004',
+    created_at: '2024-08-20',
     name: '대파',
     category: '채소',
     unit: 'kg',
-    currentPrice: 4200,
-    priceHistory: generatePriceHistory(4200),
+    current_price: 4200,
+    price_history: generatePriceHistory(4200),
     suppliers: ['농협', '신선마트'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 25,
-    minStockLevel: 15,
+    updated_at: '2024-08-27',
+    stock_level: 25,
+    min_stock_level: 15,
     status: 'available',
     is_active: true,
     description: '국산 대파, 신선도 우수'
   },
   {
     id: 'ing_005',
+    created_at: '2024-08-20',
     name: '마늘',
     category: '향신료',
     unit: 'kg',
-    currentPrice: 8500,
-    priceHistory: generatePriceHistory(8500),
+    current_price: 8500,
+    price_history: generatePriceHistory(8500),
     suppliers: ['농협', '도매시장'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 12,
-    minStockLevel: 8,
+    updated_at: '2024-08-27',
+    stock_level: 12,
+    min_stock_level: 8,
     status: 'available',
     is_active: true,
     description: '국산 마늘, 6쪽 마늘'
   },
   {
     id: 'ing_006',
+    created_at: '2024-08-20',
     name: '참기름',
     category: '조미료',
     unit: 'L',
-    currentPrice: 28000,
-    priceHistory: generatePriceHistory(28000),
+    current_price: 28000,
+    price_history: generatePriceHistory(28000),
     suppliers: ['한국조미료', '신선마트'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 3,
-    minStockLevel: 5,
+    updated_at: '2024-08-27',
+    stock_level: 3,
+    min_stock_level: 5,
     status: 'low_stock',
     is_active: true,
     description: '100% 참깨로 만든 프리미엄 참기름'
   },
   {
     id: 'ing_007',
+    created_at: '2024-08-20',
     name: '쌀',
     category: '곡류',
     unit: 'kg',
-    currentPrice: 4500,
-    priceHistory: generatePriceHistory(4500),
+    current_price: 4500,
+    price_history: generatePriceHistory(4500),
     suppliers: ['농협', '미곡상회'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 100,
-    minStockLevel: 50,
+    updated_at: '2024-08-27',
+    stock_level: 100,
+    min_stock_level: 50,
     status: 'available',
     is_active: true,
     description: '신동진쌀, 1등급'
   },
   {
     id: 'ing_008',
+    created_at: '2024-08-20',
     name: '계란',
     category: '난류',
     unit: '개',
-    currentPrice: 350,
-    priceHistory: generatePriceHistory(350),
+    current_price: 350,
+    price_history: generatePriceHistory(350),
     suppliers: ['축산물유통센터', '신선마트'],
-    lastUpdated: '2024-08-27',
-    stockLevel: 200,
-    minStockLevel: 100,
+    updated_at: '2024-08-27',
+    stock_level: 200,
+    min_stock_level: 100,
     status: 'available',
     is_active: true,
     description: '특란, 무항생제'
@@ -165,6 +173,8 @@ export const mockIngredients: Ingredient[] = [
 export const mockSuppliers: Supplier[] = [
   {
     id: 'sup_001',
+    created_at: '2024-08-20',
+    updated_at: '2024-08-27',
     name: '신선마트',
     contact: {
       phone: '02-1234-5678',
@@ -185,6 +195,8 @@ export const mockSuppliers: Supplier[] = [
   },
   {
     id: 'sup_002',
+    created_at: '2024-08-20',
+    updated_at: '2024-08-27',
     name: '농협',
     contact: {
       phone: '02-2345-6789',
@@ -205,6 +217,8 @@ export const mockSuppliers: Supplier[] = [
   },
   {
     id: 'sup_003',
+    created_at: '2024-08-20',
+    updated_at: '2024-08-27',
     name: '도매시장',
     contact: {
       phone: '02-3456-7890',
@@ -225,6 +239,8 @@ export const mockSuppliers: Supplier[] = [
   },
   {
     id: 'sup_004',
+    created_at: '2024-08-20',
+    updated_at: '2024-08-27',
     name: '한우마을',
     contact: {
       phone: '02-4567-8901',
@@ -249,69 +265,72 @@ export const mockSuppliers: Supplier[] = [
 export const mockRecipes: Recipe[] = [
   {
     id: 'rec_001',
+    created_at: '2024-08-20',
     name: '불고기',
     category: '메인요리',
     servings: 4,
     ingredients: [
-      { ingredientId: 'ing_001', name: '한우등심', quantity: 0.5, unit: 'kg', cost: 22500 },
-      { ingredientId: 'ing_003', name: '양파', quantity: 0.2, unit: 'kg', cost: 700 },
-      { ingredientId: 'ing_004', name: '대파', quantity: 0.1, unit: 'kg', cost: 420 },
-      { ingredientId: 'ing_005', name: '마늘', quantity: 0.05, unit: 'kg', cost: 425 },
-      { ingredientId: 'ing_006', name: '참기름', quantity: 0.02, unit: 'L', cost: 560 }
+      { ingredient_id: 'ing_001', name: '한우등심', quantity: 0.5, unit: 'kg', cost: 22500 },
+      { ingredient_id: 'ing_003', name: '양파', quantity: 0.2, unit: 'kg', cost: 700 },
+      { ingredient_id: 'ing_004', name: '대파', quantity: 0.1, unit: 'kg', cost: 420 },
+      { ingredient_id: 'ing_005', name: '마늘', quantity: 0.05, unit: 'kg', cost: 425 },
+      { ingredient_id: 'ing_006', name: '참기름', quantity: 0.02, unit: 'L', cost: 560 }
     ],
-    totalCost: 24605,
-    costPerServing: 6151,
-    sellingPrice: 15000,
-    profitAmount: 8849,
-    profitMargin: 59,
-    prepTime: 30,
-    cookTime: 15,
+    total_cost: 24605,
+    cost_per_serving: 6151,
+    selling_price: 15000,
+    profit_amount: 8849,
+    profit_margin: 59,
+    prep_time: 30,
+    cook_time: 15,
     difficulty: 'medium',
     tags: ['한식', '인기메뉴', '육류'],
-    lastUpdated: '2024-08-27'
+    updated_at: '2024-08-27'
   },
   {
     id: 'rec_002',
+    created_at: '2024-08-20',
     name: '김치볶음밥',
     category: '밥요리',
     servings: 2,
     ingredients: [
-      { ingredientId: 'ing_007', name: '쌀', quantity: 0.3, unit: 'kg', cost: 1350 },
-      { ingredientId: 'ing_002', name: '대패삼겹살', quantity: 0.15, unit: 'kg', cost: 1800 },
-      { ingredientId: 'ing_008', name: '계란', quantity: 2, unit: '개', cost: 700 },
-      { ingredientId: 'ing_006', name: '참기름', quantity: 0.01, unit: 'L', cost: 280 }
+      { ingredient_id: 'ing_007', name: '쌀', quantity: 0.3, unit: 'kg', cost: 1350 },
+      { ingredient_id: 'ing_002', name: '대패삼겹살', quantity: 0.15, unit: 'kg', cost: 1800 },
+      { ingredient_id: 'ing_008', name: '계란', quantity: 2, unit: '개', cost: 700 },
+      { ingredient_id: 'ing_006', name: '참기름', quantity: 0.01, unit: 'L', cost: 280 }
     ],
-    totalCost: 4130,
-    costPerServing: 2065,
-    sellingPrice: 8000,
-    profitAmount: 3870,
-    profitMargin: 48,
-    prepTime: 15,
-    cookTime: 10,
+    total_cost: 4130,
+    cost_per_serving: 2065,
+    selling_price: 8000,
+    profit_amount: 3870,
+    profit_margin: 48,
+    prep_time: 15,
+    cook_time: 10,
     difficulty: 'easy',
     tags: ['한식', '간편식', '볶음밥'],
-    lastUpdated: '2024-08-27'
+    updated_at: '2024-08-27'
   },
   {
     id: 'rec_003',
+    created_at: '2024-08-20',
     name: '된장찌개',
     category: '국/찌개',
     servings: 4,
     ingredients: [
-      { ingredientId: 'ing_003', name: '양파', quantity: 0.1, unit: 'kg', cost: 350 },
-      { ingredientId: 'ing_004', name: '대파', quantity: 0.05, unit: 'kg', cost: 210 },
-      { ingredientId: 'ing_005', name: '마늘', quantity: 0.02, unit: 'kg', cost: 170 }
+      { ingredient_id: 'ing_003', name: '양파', quantity: 0.1, unit: 'kg', cost: 350 },
+      { ingredient_id: 'ing_004', name: '대파', quantity: 0.05, unit: 'kg', cost: 210 },
+      { ingredient_id: 'ing_005', name: '마늘', quantity: 0.02, unit: 'kg', cost: 170 }
     ],
-    totalCost: 730,
-    costPerServing: 183,
-    sellingPrice: 3000,
-    profitAmount: 2270,
-    profitMargin: 76,
-    prepTime: 10,
-    cookTime: 20,
+    total_cost: 730,
+    cost_per_serving: 183,
+    selling_price: 3000,
+    profit_amount: 2270,
+    profit_margin: 76,
+    prep_time: 10,
+    cook_time: 20,
     difficulty: 'easy',
     tags: ['한식', '국물요리', '가정식'],
-    lastUpdated: '2024-08-27'
+    updated_at: '2024-08-27'
   }
 ];
 
@@ -326,7 +345,7 @@ export const mockReports: CostReport[] = [
       end: '2024-08-31'
     },
     data: {
-      totalCost: 2450000,
+      total_cost: 2450000,
       costChange: -5.2,
       topExpensiveIngredients: [
         { name: '한우등심', cost: 450000, percentage: 18.4 },
@@ -355,7 +374,7 @@ export const mockReports: CostReport[] = [
 export const mockPriceAlerts: PriceAlert[] = [
   {
     id: 'alert_001',
-    ingredientId: 'ing_001',
+    ingredient_id: 'ing_001',
     ingredientName: '한우등심',
     alertType: 'price_increase',
     threshold: 42000,
@@ -370,7 +389,7 @@ export const mockPriceAlerts: PriceAlert[] = [
   },
   {
     id: 'alert_002',
-    ingredientId: 'ing_006',
+    ingredient_id: 'ing_006',
     ingredientName: '참기름',
     alertType: 'stock_low',
     threshold: 5,

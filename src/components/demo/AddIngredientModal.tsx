@@ -21,15 +21,15 @@ interface AddIngredientModalProps {
 }
 
 const categoryOptions: { value: IngredientCategory; label: string }[] = [
-  { value: 'vegetables', label: '채소류' },
-  { value: 'meat', label: '육류' },
-  { value: 'seafood', label: '수산물' },
-  { value: 'dairy', label: '유제품' },
-  { value: 'grains', label: '곡류' },
-  { value: 'seasonings', label: '조미료' },
-  { value: 'processed', label: '가공품' },
-  { value: 'beverages', label: '음료' },
-  { value: 'others', label: '기타' }
+  { value: '채소', label: '채소류' },
+  { value: '육류', label: '육류' },
+  { value: '해산물', label: '수산물' },
+  { value: '유제품', label: '유제품' },
+  { value: '곡류', label: '곡류' },
+  { value: '조미료', label: '조미료' },
+  { value: '향신료', label: '향신료' },
+  { value: '난류', label: '난류' },
+  { value: '기타', label: '기타' }
 ]
 
 export default function AddIngredientModal({ open, onOpenChange }: AddIngredientModalProps) {
@@ -37,10 +37,9 @@ export default function AddIngredientModal({ open, onOpenChange }: AddIngredient
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    category: 'vegetables' as IngredientCategory,
+    category: '채소' as IngredientCategory,
     unit: '',
     description: '',
-    storage_info: '',
     is_active: true
   })
 
@@ -56,19 +55,24 @@ export default function AddIngredientModal({ open, onOpenChange }: AddIngredient
         name: formData.name.trim(),
         category: formData.category,
         unit: formData.unit.trim(),
-        description: formData.description.trim() || null,
-        storage_info: formData.storage_info.trim() || null,
+        description: formData.description.trim() || undefined,
         is_active: formData.is_active,
-        user_id: 'demo-user-1'
+        // UI-specific fields
+        current_price: 0,
+        price_history: [],
+        suppliers: [],
+        status: 'available' as const,
+        // Base entity fields
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
 
       // Reset form
       setFormData({
         name: '',
-        category: 'vegetables',
+        category: '채소' as IngredientCategory,
         unit: '',
         description: '',
-        storage_info: '',
         is_active: true
       })
 
@@ -155,15 +159,6 @@ export default function AddIngredientModal({ open, onOpenChange }: AddIngredient
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="storage_info">보관 정보</Label>
-            <Input
-              id="storage_info"
-              value={formData.storage_info}
-              onChange={handleChange('storage_info')}
-              placeholder="예: 냉장 보관, 상온 보관, 냉동 보관 등"
-            />
-          </div>
 
           <div className="flex items-center space-x-2">
             <input

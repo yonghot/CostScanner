@@ -58,3 +58,4 @@ pids
 
 # Cache
 .cache/
+.vercel

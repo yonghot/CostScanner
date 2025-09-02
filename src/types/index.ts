@@ -272,6 +272,7 @@ export interface SupplierUI extends Supplier {
   total_orders?: number
   last_order_date?: string
   contact_manager?: string
+  notes?: string
 }
 
 export interface RecipeIngredientUI {

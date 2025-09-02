@@ -24,7 +24,13 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
 
   // Filter suppliers
   const filteredSuppliers = suppliers.filter(supplier => {
-    if (filters.status && supplier.status !== filters.status) return false;
+    if (filters.status) {
+      // Map status filter to is_active boolean
+      const isActive = filters.status === 'active';
+      if ((isActive && !supplier.is_active) || (!isActive && supplier.is_active)) {
+        return false;
+      }
+    }
     return true;
   });
 
@@ -41,21 +47,21 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
         aValue = a.rating;
         bValue = b.rating;
         break;
-      case 'minOrder':
-        aValue = a.minOrder;
-        bValue = b.minOrder;
+      case 'min_order':
+        aValue = a.min_order;
+        bValue = b.min_order;
         break;
-      case 'totalOrders':
-        aValue = a.totalOrders || 0;
-        bValue = b.totalOrders || 0;
+      case 'total_orders':
+        aValue = a.total_orders || 0;
+        bValue = b.total_orders || 0;
         break;
-      case 'lastOrderDate':
-        aValue = new Date(a.lastOrderDate || '1900-01-01');
-        bValue = new Date(b.lastOrderDate || '1900-01-01');
+      case 'last_order_date':
+        aValue = new Date(a.last_order_date || '1900-01-01');
+        bValue = new Date(b.last_order_date || '1900-01-01');
         break;
       default:
-        aValue = a[sort.field as keyof Supplier];
-        bValue = b[sort.field as keyof Supplier];
+        aValue = a[sort.field as keyof SupplierUI];
+        bValue = b[sort.field as keyof SupplierUI];
     }
     
     if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -193,10 +199,10 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('minOrder')}
+                  onClick={() => handleSort('min_order')}
                 >
                   최소주문금액
-                  {sort.field === 'minOrder' && (
+                  {sort.field === 'min_order' && (
                     <span className="ml-1">
                       {sort.direction === 'asc' ? '↑' : '↓'}
                     </span>
@@ -207,10 +213,10 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('totalOrders')}
+                  onClick={() => handleSort('total_orders')}
                 >
                   총 주문
-                  {sort.field === 'totalOrders' && (
+                  {sort.field === 'total_orders' && (
                     <span className="ml-1">
                       {sort.direction === 'asc' ? '↑' : '↓'}
                     </span>
@@ -233,14 +239,14 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
                         {supplier.name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        담당자: {supplier.contact.manager || '미지정'}
+                        담당자: {supplier.contact_person || '미지정'}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      <div>{formatPhoneNumber(supplier.contact.phone)}</div>
-                      <div className="text-gray-500">{supplier.contact.email}</div>
+                      <div>{formatPhoneNumber(supplier.phone || '')}</div>
+                      <div className="text-gray-500">{supplier.email || ''}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -271,24 +277,24 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatPrice(supplier.minOrder)}
+                    {formatPrice(supplier.min_order)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {supplier.deliveryTime}
+                    {supplier.delivery_time}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {supplier.totalOrders || 0}회
+                      {supplier.total_orders || 0}회
                     </div>
-                    {supplier.lastOrderDate && (
+                    {supplier.last_order_date && (
                       <div className="text-xs text-gray-500">
-                        최근: {formatDate(supplier.lastOrderDate, 'MM/DD')}
+                        최근: {formatDate(supplier.last_order_date, 'MM/DD')}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(supplier.status)}`}>
-                      {getStatusLabel(supplier.status)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${supplier.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {supplier.is_active ? '활성' : '비활성'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -334,13 +340,10 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
           </div>
           <div className="flex items-center space-x-4 text-sm">
             <span className="text-green-600">
-              활성: {sortedSuppliers.filter(s => s.status === 'active').length}개
-            </span>
-            <span className="text-yellow-600">
-              대기: {sortedSuppliers.filter(s => s.status === 'pending').length}개
+              활성: {sortedSuppliers.filter(s => s.is_active).length}개
             </span>
             <span className="text-gray-600">
-              비활성: {sortedSuppliers.filter(s => s.status === 'inactive').length}개
+              비활성: {sortedSuppliers.filter(s => !s.is_active).length}개
             </span>
             <span className="text-primary">
               평균 평점: {(sortedSuppliers.reduce((sum, s) => sum + s.rating, 0) / sortedSuppliers.length).toFixed(1)}점

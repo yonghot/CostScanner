@@ -13,14 +13,12 @@ interface SupplierFormProps {
 export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFormProps) {
   const [formData, setFormData] = useState<SupplierFormData>({
     name: '',
-    contact: {
-      phone: '',
-      email: '',
-      address: '',
-      manager: '',
-    },
-    paymentTerms: '',
-    minOrder: 0,
+    phone: '',
+    email: '',
+    address: '',
+    contact_person: '',
+    payment_terms: '',
+    min_order: 0,
     specialties: [],
     notes: '',
   });
@@ -32,15 +30,13 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
     if (supplier) {
       setFormData({
         name: supplier.name,
-        contact: {
-          phone: supplier.contact.phone,
-          email: supplier.contact.email,
-          address: supplier.contact.address,
-          manager: supplier.contact.manager || '',
-        },
-        paymentTerms: supplier.paymentTerms,
-        minOrder: supplier.minOrder,
-        specialties: supplier.specialties,
+        phone: supplier.phone || '',
+        email: supplier.email || '',
+        address: supplier.address || '',
+        contact_person: supplier.contact_person || '',
+        payment_terms: supplier.payment_terms || '',
+        min_order: supplier.min_order || 0,
+        specialties: supplier.specialties || [],
         notes: supplier.notes || '',
       });
     }
@@ -63,29 +59,29 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
       newErrors.name = '공급업체명을 입력해주세요.';
     }
 
-    if (!formData.contact.phone.trim()) {
+    if (!formData.phone?.trim()) {
       newErrors.phone = '연락처를 입력해주세요.';
     }
 
-    if (!formData.contact.email.trim()) {
+    if (!formData.email?.trim()) {
       newErrors.email = '이메일을 입력해주세요.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    if (!formData.contact.address.trim()) {
+    if (!formData.address?.trim()) {
       newErrors.address = '주소를 입력해주세요.';
     }
 
-    if (!formData.paymentTerms) {
-      newErrors.paymentTerms = '결제조건을 선택해주세요.';
+    if (!formData.payment_terms) {
+      newErrors.payment_terms = '결제조건을 선택해주세요.';
     }
 
-    if (formData.minOrder <= 0) {
-      newErrors.minOrder = '최소주문금액을 입력해주세요.';
+    if (!formData.min_order || formData.min_order <= 0) {
+      newErrors.min_order = '최소주문금액을 입력해주세요.';
     }
 
-    if (formData.specialties.length === 0) {
+    if (!formData.specialties || formData.specialties.length === 0) {
       newErrors.specialties = '최소 하나의 전문 분야를 선택해주세요.';
     }
 
@@ -101,38 +97,33 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
-    if (field.startsWith('contact.')) {
-      const contactField = field.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        contact: { ...prev.contact, [contactField]: value }
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
+  const handleInputChange = (field: keyof SupplierFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
-    const errorKey = field.startsWith('contact.') ? field.split('.')[1] : field;
-    if (errors[errorKey]) {
-      setErrors((prev: any) => ({ ...prev, [errorKey]: undefined }));
+    if (errors[field]) {
+      setErrors((prev: any) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const addSpecialty = () => {
-    if (newSpecialty.trim() && !formData.specialties.includes(newSpecialty.trim())) {
+    if (newSpecialty.trim() && formData.specialties && !formData.specialties.includes(newSpecialty.trim())) {
       handleInputChange('specialties', [...formData.specialties, newSpecialty.trim()]);
       setNewSpecialty('');
     }
   };
 
   const removeSpecialty = (specialty: string) => {
-    handleInputChange('specialties', formData.specialties.filter(s => s !== specialty));
+    if (formData.specialties) {
+      handleInputChange('specialties', formData.specialties.filter(s => s !== specialty));
+    }
   };
 
   const addPredefinedSpecialty = (specialty: string) => {
-    if (!formData.specialties.includes(specialty)) {
+    if (formData.specialties && !formData.specialties.includes(specialty)) {
       handleInputChange('specialties', [...formData.specialties, specialty]);
+    } else if (!formData.specialties) {
+      handleInputChange('specialties', [specialty]);
     }
   };
 
@@ -181,8 +172,8 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                 </label>
                 <input
                   type="text"
-                  value={formData.contact.manager}
-                  onChange={(e) => handleInputChange('contact.manager', e.target.value)}
+                  value={formData.contact_person || ''}
+                  onChange={(e) => handleInputChange('contact_person', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="담당자 이름"
                 />
@@ -200,8 +191,8 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                   </label>
                   <input
                     type="tel"
-                    value={formData.contact.phone}
-                    onChange={(e) => handleInputChange('contact.phone', e.target.value)}
+                    value={formData.phone || ''}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
                       errors.phone ? 'border-red-300' : 'border-gray-300'
                     }`}
@@ -218,8 +209,8 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                   </label>
                   <input
                     type="email"
-                    value={formData.contact.email}
-                    onChange={(e) => handleInputChange('contact.email', e.target.value)}
+                    value={formData.email || ''}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
                       errors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
@@ -237,8 +228,8 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                 </label>
                 <input
                   type="text"
-                  value={formData.contact.address}
-                  onChange={(e) => handleInputChange('contact.address', e.target.value)}
+                  value={formData.address || ''}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
                     errors.address ? 'border-red-300' : 'border-gray-300'
                   }`}
@@ -257,10 +248,10 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                   결제조건 *
                 </label>
                 <select
-                  value={formData.paymentTerms}
-                  onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
+                  value={formData.payment_terms || ''}
+                  onChange={(e) => handleInputChange('payment_terms', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
-                    errors.paymentTerms ? 'border-red-300' : 'border-gray-300'
+                    errors.payment_terms ? 'border-red-300' : 'border-gray-300'
                   }`}
                 >
                   <option value="">결제조건 선택</option>
@@ -270,8 +261,8 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                     </option>
                   ))}
                 </select>
-                {errors.paymentTerms && (
-                  <p className="mt-1 text-sm text-red-600">{errors.paymentTerms}</p>
+                {errors.payment_terms && (
+                  <p className="mt-1 text-sm text-red-600">{errors.payment_terms}</p>
                 )}
               </div>
 
@@ -281,16 +272,16 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                 </label>
                 <input
                   type="number"
-                  value={formData.minOrder || ''}
-                  onChange={(e) => handleInputChange('minOrder', parseInt(e.target.value) || 0)}
+                  value={formData.min_order || ''}
+                  onChange={(e) => handleInputChange('min_order', parseInt(e.target.value) || 0)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
-                    errors.minOrder ? 'border-red-300' : 'border-gray-300'
+                    errors.min_order ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="원"
                   min="0"
                 />
-                {errors.minOrder && (
-                  <p className="mt-1 text-sm text-red-600">{errors.minOrder}</p>
+                {errors.min_order && (
+                  <p className="mt-1 text-sm text-red-600">{errors.min_order}</p>
                 )}
               </div>
             </div>
@@ -310,9 +301,9 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                       key={specialty}
                       type="button"
                       onClick={() => addPredefinedSpecialty(specialty)}
-                      disabled={formData.specialties.includes(specialty)}
+                      disabled={formData.specialties?.includes(specialty)}
                       className={`px-3 py-1 text-sm rounded-full border ${
-                        formData.specialties.includes(specialty)
+                        formData.specialties?.includes(specialty)
                           ? 'bg-primary/10 text-primary border-primary/20 cursor-not-allowed'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                       }`}
@@ -349,7 +340,7 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
 
               {/* Selected specialties */}
               <div className="space-y-2">
-                {formData.specialties.map((specialty, index) => (
+                {formData.specialties?.map((specialty, index) => (
                   <div key={index} className="flex items-center justify-between bg-primary/5 px-3 py-2 rounded-md">
                     <span className="text-sm text-primary">{specialty}</span>
                     <button
@@ -369,7 +360,7 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                 <p className="mt-1 text-sm text-red-600">{errors.specialties}</p>
               )}
 
-              {formData.specialties.length === 0 && (
+              {(!formData.specialties || formData.specialties.length === 0) && (
                 <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-md">
                   <p className="text-sm text-gray-500">전문 분야를 추가해주세요</p>
                 </div>
@@ -382,7 +373,7 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
                 메모
               </label>
               <textarea
-                value={formData.notes}
+                value={formData.notes || ''}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="공급업체에 대한 추가 정보나 메모를 입력하세요"

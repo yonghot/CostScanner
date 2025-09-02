@@ -282,7 +282,7 @@ export default function IngredientForm({ ingredient, onSave, onCancel }: Ingredi
                 <p className="mt-1 text-sm text-red-600">{errors.suppliers as string}</p>
               )}
 
-              {formData.suppliers.length === 0 && (
+              {(!formData.suppliers || formData.suppliers.length === 0) && (
                 <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-md">
                   <p className="text-sm text-gray-500">공급업체를 추가해주세요</p>
                 </div>
