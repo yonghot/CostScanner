@@ -13,9 +13,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "db:generate": "supabase gen types typescript --local > types/supabase.ts",
-    "db:reset": "supabase db reset",
-    "db:seed": "supabase seed run"
+    "db:generate": "echo 'Run locally: npx supabase gen types typescript --local > types/supabase.ts'",
+    "db:reset": "echo 'Run locally: npx supabase db reset'",
+    "db:seed": "echo 'Run locally: npx supabase seed run'"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -60,7 +60,6 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.35",
     "prettier": "^3.2.5",
-    "supabase": "^1.142.2",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   },
