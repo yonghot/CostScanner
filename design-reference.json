@@ -1,0 +1,323 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_date": "2025-08-27",
+    "source_website": "https://clobe.ai",
+    "analysis_scope": "Complete website including homepage, pricing, customer cases, about, blog pages",
+    "purpose": "Design reference for CostScanner food ingredient monitoring system"
+  },
+  "brand_identity": {
+    "primary_colors": {
+      "brand_blue": "#4285f4",
+      "description": "Professional blue used for primary actions and branding",
+      "usage": "Main navigation, primary buttons, headings"
+    },
+    "secondary_colors": {
+      "success_green": "#34a853",
+      "warning_yellow": "#fbbc04",
+      "error_red": "#ea4335",
+      "neutral_gray": "#5f6368"
+    },
+    "typography": {
+      "primary_font": "system-ui, -apple-system, sans-serif",
+      "heading_weights": ["600", "700"],
+      "body_weight": "400",
+      "line_height": {
+        "headings": "1.2",
+        "body": "1.6"
+      }
+    },
+    "logo_treatment": {
+      "style": "Clean, minimal wordmark",
+      "placement": "Top-left navigation, consistent across pages"
+    }
+  },
+  "layout_system": {
+    "container": {
+      "max_width": "1200px",
+      "padding": "0 24px",
+      "margin": "0 auto"
+    },
+    "grid": {
+      "columns": 12,
+      "gap": "24px",
+      "breakpoints": {
+        "mobile": "< 768px",
+        "tablet": "768px - 1024px",
+        "desktop": "> 1024px"
+      }
+    },
+    "spacing_scale": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "32px",
+      "xxl": "48px",
+      "xxxl": "64px"
+    }
+  },
+  "navigation_patterns": {
+    "header": {
+      "height": "64px",
+      "background": "white",
+      "border_bottom": "1px solid #e8eaed",
+      "elements": [
+        {
+          "logo": "Left-aligned, clickable home link"
+        },
+        {
+          "cta_button": "Right-aligned primary button '시작하기'"
+        }
+      ],
+      "mobile_behavior": "Hamburger menu on mobile devices"
+    },
+    "footer": {
+      "background": "white",
+      "sections": [
+        {
+          "primary_cta": "Start button prominently displayed"
+        },
+        {
+          "legal_links": "Terms, Privacy, Notices in small text"
+        },
+        {
+          "product_services": "Organized navigation links"
+        },
+        {
+          "company_info": "About, News, Blog links"
+        },
+        {
+          "contact": "Address, email, business registration"
+        }
+      ]
+    }
+  },
+  "component_patterns": {
+    "buttons": {
+      "primary": {
+        "background": "#4285f4",
+        "color": "white",
+        "border_radius": "6px",
+        "padding": "12px 24px",
+        "font_weight": "500",
+        "hover_state": "Darker shade background",
+        "icon_support": "Arrow icons for navigation buttons"
+      },
+      "secondary": {
+        "background": "transparent",
+        "border": "1px solid #dadce0",
+        "color": "#5f6368",
+        "hover_state": "Light gray background"
+      }
+    },
+    "cards": {
+      "style": "Clean white background",
+      "border": "1px solid #dadce0",
+      "border_radius": "8px",
+      "padding": "24px",
+      "shadow": "subtle drop shadow",
+      "hover_effect": "Slight elevation increase"
+    },
+    "testimonials": {
+      "layout": "Quote + attribution",
+      "styling": "Centered text, company logo, person details",
+      "background": "White cards with subtle borders"
+    },
+    "feature_sections": {
+      "layout": "Icon + title + description format",
+      "spacing": "Generous vertical spacing between sections",
+      "icons": "Simple, outlined style icons"
+    }
+  },
+  "content_patterns": {
+    "headlines": {
+      "structure": "Short, impactful phrases often split across two lines",
+      "examples": [
+        "클로브AI로 간편한 자금 관리",
+        "이 모든 기능을 평생 무료로 사용하세요",
+        "강력한 데이터 보안으로 고객사의 데이터를 보호합니다"
+      ],
+      "tone": "Professional, benefit-focused, customer-centric"
+    },
+    "body_text": {
+      "length": "Concise, scannable paragraphs",
+      "structure": "Benefit-focused, problem-solution format",
+      "formatting": "Bullet points for feature lists"
+    },
+    "social_proof": {
+      "format": "Customer count + testimonials + company logos",
+      "placement": "Multiple sections throughout pages",
+      "style": "Specific numbers and detailed quotes"
+    }
+  },
+  "page_specific_patterns": {
+    "homepage": {
+      "hero_section": {
+        "layout": "Centered text with dual CTA buttons",
+        "buttons": ["무료로 시작하기", "체험하기"],
+        "background": "Clean white with subtle elements"
+      },
+      "features_section": {
+        "layout": "4-column grid on desktop",
+        "pattern": "Icon + title + description",
+        "spacing": "Equal heights maintained"
+      },
+      "pricing_teaser": {
+        "emphasis": "Free forever messaging",
+        "details": "No limitations highlighted"
+      },
+      "security_section": {
+        "layout": "6-item grid",
+        "pattern": "Title + detailed explanation",
+        "trust_signals": "Regulatory compliance mentions"
+      },
+      "testimonials": {
+        "layout": "Rotating carousel",
+        "content": "Specific business impact quotes",
+        "attribution": "Name + title + company"
+      }
+    },
+    "pricing_page": {
+      "layout": "Two-column comparison (Free vs Premium)",
+      "emphasis": "Free tier prominently featured",
+      "features": "Bullet point lists",
+      "faq_section": "Expandable Q&A format"
+    },
+    "customer_cases": {
+      "layout": "List format with arrow indicators",
+      "preview": "Title + brief description",
+      "categorization": "Filter tabs (전체, 클로브AI, 클로브금융)",
+      "navigation": "Clickable cards leading to detail pages"
+    },
+    "about_page": {
+      "timeline": "Chronological company milestones",
+      "team_section": "Photo + name + title + background",
+      "press_coverage": "Carousel of news articles with logos",
+      "story_telling": "Mission-driven narrative structure"
+    },
+    "blog": {
+      "layout": "Single column list",
+      "preview": "Arrow + title format",
+      "categories": "Financial, startup, and how-to content",
+      "navigation": "Simple scrolling list format"
+    }
+  },
+  "ui_principles": {
+    "visual_hierarchy": {
+      "primary": "Large headings with ample white space",
+      "secondary": "Clear section breaks and consistent spacing",
+      "tertiary": "Subtle typography variations for information hierarchy"
+    },
+    "accessibility": {
+      "color_contrast": "High contrast ratios maintained",
+      "focus_states": "Clear focus indicators",
+      "semantic_markup": "Proper heading structure and landmarks"
+    },
+    "responsive_design": {
+      "mobile_first": "Content stacks vertically on mobile",
+      "breakpoints": "Smooth transitions between device sizes",
+      "touch_targets": "Appropriately sized for mobile interaction"
+    },
+    "loading_states": {
+      "performance": "Fast loading with minimal assets",
+      "progressive": "Content loads progressively"
+    }
+  },
+  "interaction_patterns": {
+    "hover_states": {
+      "buttons": "Color darkening and subtle animations",
+      "cards": "Elevation increase with shadow",
+      "links": "Underline or color change"
+    },
+    "animations": {
+      "type": "Subtle, professional transitions",
+      "duration": "300-500ms for most interactions",
+      "easing": "Smooth, natural curves"
+    },
+    "feedback": {
+      "visual": "Clear state changes for interactions",
+      "loading": "Appropriate loading indicators"
+    }
+  },
+  "data_visualization": {
+    "charts": {
+      "style": "Clean, minimal design",
+      "colors": "Brand-consistent color palette",
+      "labels": "Clear, readable typography"
+    },
+    "metrics": {
+      "format": "Large numbers with clear context",
+      "highlighting": "Important metrics prominently displayed"
+    }
+  },
+  "form_patterns": {
+    "inputs": {
+      "style": "Clean borders with focus states",
+      "validation": "Clear error messaging",
+      "labels": "Above-input placement"
+    },
+    "submission": {
+      "primary_action": "Prominent submit buttons",
+      "feedback": "Success/error state communication"
+    }
+  },
+  "content_organization": {
+    "information_architecture": {
+      "main_navigation": [
+        "제품 및 서비스",
+        "회사 정보", 
+        "Contact"
+      ],
+      "sub_navigation": "Clear categorization within sections"
+    },
+    "content_flow": {
+      "problem_solution": "Problem identification → Solution presentation → Social proof",
+      "progressive_disclosure": "High-level overview → Detailed features → Implementation"
+    }
+  },
+  "trust_building_elements": {
+    "security_badges": "Regulatory compliance prominently displayed",
+    "customer_logos": "Recognizable company logos as social proof",
+    "specific_metrics": "Concrete numbers (4000+ companies, 700억원 거래액)",
+    "team_credentials": "Professional backgrounds highlighted",
+    "press_coverage": "Media mentions with publication logos"
+  },
+  "mobile_specific": {
+    "navigation": "Simplified menu structure",
+    "content": "Single column layout",
+    "interactions": "Touch-optimized button sizes",
+    "performance": "Optimized for mobile loading speeds"
+  },
+  "business_specific_adaptations": {
+    "b2b_focus": {
+      "messaging": "Business benefit-focused copy",
+      "proof_points": "ROI and efficiency improvements",
+      "trust_signals": "Security and compliance emphasis"
+    },
+    "fintech_considerations": {
+      "security_emphasis": "Multiple security certifications displayed",
+      "regulatory_compliance": "Financial supervision mentions",
+      "data_protection": "Privacy and security detailed explanations"
+    }
+  },
+  "application_guidelines": {
+    "adaptation_for_costscanner": {
+      "color_palette": "Adapt blue-based system for food industry context",
+      "content_structure": "Apply problem-solution-proof framework to ingredient costs",
+      "trust_building": "Emphasize data accuracy and cost savings rather than financial security",
+      "feature_presentation": "Use 4-column grid for main features (price monitoring, recipe management, purchase tracking, reporting)",
+      "social_proof": "Focus on restaurant success stories and cost savings metrics"
+    },
+    "key_takeaways": [
+      "Clean, professional B2B SaaS aesthetic",
+      "Benefit-driven headlines with specific outcomes",
+      "Generous white space and clear visual hierarchy",
+      "Strong emphasis on trust and security",
+      "Progressive disclosure of complex information",
+      "Mobile-responsive design maintaining desktop functionality",
+      "Consistent component reuse across all pages",
+      "Customer-centric messaging with concrete proof points"
+    ]
+  }
+}

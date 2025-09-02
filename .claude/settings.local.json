@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp list:*)",
+      "Bash(echo $OS)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "WebSearch",
+      "Bash(npx:*)",
+      "Bash(claude mcp add:*)",
+      "Read(/C:\\Users\\user\\.claude/**)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_click",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__chadcn-ui__list_components",
+      "mcp__chadcn-ui__get_component",
+      "Bash(pkill:*)",
+      "Bash(taskkill:*)",
+      "mcp__context7__resolve-library-id",
+      "WebFetch(domain:clobe.ai)",
+      "mcp__playwright__browser_snapshot",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
