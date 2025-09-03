@@ -1,4 +1,15 @@
-import puppeteer, { Browser, Page } from 'puppeteer'
+// TODO: 향후 구현 예정 - puppeteer를 사용한 웹 스크래핑 기능
+// 필요시 'npm install puppeteer' 실행 후 아래 주석 해제
+// import puppeteer, { Browser, Page } from 'puppeteer'
+
+// 임시 스텁 타입 정의 (puppeteer 설치 전까지 사용)
+type Page = any
+const puppeteer = {
+  launch: async (options?: any) => ({
+    newPage: async () => null,
+    close: async () => {}
+  })
+}
 import { 
   WebScrapingCollector, 
   CollectorConfig, 
@@ -10,7 +21,7 @@ import {
 import { PriceRecord, Supplier, Ingredient } from '@/types'
 
 export class WebScrapingCollectorImpl implements WebScrapingCollector {
-  private browser: Browser | null = null
+  private browser: any | null = null // Browser type from puppeteer
   private config: CollectorConfig
   private status: CollectorStatus
   private errors: CollectorError[] = []
@@ -109,7 +120,7 @@ export class WebScrapingCollectorImpl implements WebScrapingCollector {
       await page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout * 1000 })
 
       // 페이지에서 상품 데이터 추출
-      const products = await page.evaluate((sel) => {
+      const products = await page.evaluate((sel: any) => {
         const items = document.querySelectorAll(sel.itemName)
         const data: any[] = []
 
@@ -144,7 +155,7 @@ export class WebScrapingCollectorImpl implements WebScrapingCollector {
       }, selectors)
 
       // 결과 변환
-      products.forEach(product => {
+      products.forEach((product: any) => {
         results.push({
           ...product,
           url,
@@ -337,7 +348,7 @@ export class WebScrapingCollectorImpl implements WebScrapingCollector {
 
     // 불필요한 리소스 차단
     await page.setRequestInterception(true)
-    page.on('request', (req) => {
+    page.on('request', (req: any) => {
       const resourceType = req.resourceType()
       if (['stylesheet', 'image', 'font'].includes(resourceType)) {
         req.abort()

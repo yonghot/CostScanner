@@ -264,6 +264,17 @@ xxxl: 64px    /* 페이지 간격 */
 }
 ```
 
+### 테스트 프레임워크
+```json
+{
+  "jest": "^29.7.0",
+  "@testing-library/react": "^14.2.1",
+  "@testing-library/jest-dom": "^6.4.2",
+  "@testing-library/user-event": "^14.5.2",
+  "jest-environment-jsdom": "^29.7.0"
+}
+```
+
 ---
 
 ## 🎯 디자인 레퍼런스
@@ -395,6 +406,71 @@ import * as Icons from "lucide-react"
 </main>
 ```
 
+### 테스트 가이드라인
+
+#### 1. 테스트 구조 및 조직
+```tsx
+// ✅ 좋은 예: 컴포넌트와 동일한 구조
+src/components/ui/button.tsx
+src/components/ui/__tests__/button.test.tsx
+
+src/utils/format.ts
+src/utils/__tests__/format.test.ts
+```
+
+#### 2. 컴포넌트 테스트 패턴
+```tsx
+// ✅ 좋은 예: React Testing Library 활용
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Button } from '../button'
+
+describe('Button', () => {
+  it('should render with correct variant', () => {
+    render(<Button variant="destructive">삭제</Button>)
+    expect(screen.getByRole('button')).toHaveClass('bg-destructive')
+  })
+  
+  it('should handle click events', async () => {
+    const handleClick = jest.fn()
+    const user = userEvent.setup()
+    
+    render(<Button onClick={handleClick}>클릭</Button>)
+    await user.click(screen.getByRole('button'))
+    
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
+#### 3. 테스트 커버리지 목표
+- **전체 커버리지**: 40% 이상 (lines, functions, branches, statements)
+- **핵심 비즈니스 로직**: 80% 이상
+- **UI 컴포넌트**: 기본 렌더링 및 인터랙션 테스트
+- **유틸리티 함수**: 모든 케이스 및 엣지 케이스 테스트
+
+#### 4. Mock 및 테스트 환경
+```tsx
+// ✅ 좋은 예: Supabase 클라이언트 모킹
+jest.mock('@/lib/supabase', () => ({
+  createClientComponentClient: () => ({
+    auth: { getUser: jest.fn() },
+    from: jest.fn()
+  })
+}))
+
+// Web API 폴리필 사용 (jest.setup.js에서 설정)
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+```
+
+#### 5. 테스트 명령어
+```bash
+npm run test                    # 단일 실행
+npm run test:watch             # 감시 모드
+npm run test:coverage          # 커버리지 리포트
+```
+
 ---
 
 ## 🔄 업데이트 로그
@@ -406,6 +482,13 @@ import * as Icons from "lucide-react"
 - **B2B 전용 스타일**: professional-card, stats-card 시스템 구축
 - **타이포그래피**: 6단계 텍스트 스케일 시스템 완성
 - **문서 동기화**: CLAUDE.md, PRD.md와 디자인 시스템 통합 완료
+
+### 2025-09-03
+- **테스트 인프라 통합**: Jest 29.7+ 및 React Testing Library 14.2+ 추가
+- **테스트 가이드라인**: 컴포넌트 테스트 패턴 및 커버리지 목표 수립
+- **기술 스택 확장**: 테스트 프레임워크 섹션을 기술 스택에 추가
+- **개발 가이드 보완**: 테스트 구조, Mock 패턴, 명령어 사용법 정리
+- **품질 표준**: 40% 커버리지 목표 및 핵심 로직 80% 커버리지 기준 설정
 
 ---
 

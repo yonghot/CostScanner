@@ -15,6 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **UI Components**: 85% Complete (12 shadcn/ui components + custom components)
 - **Business Logic**: 70% Complete (Interface-driven module architecture)
 - **Authentication**: Ready for Supabase integration
+- **Demo Mode**: Implemented with DemoContext for trial functionality
+- **Testing Infrastructure**: 70% Complete (Jest + RTL, 10.1% coverage)
 - **Server Status**: Running on http://localhost:3000 (fixed port)
 
 ## Common Development Commands
@@ -46,6 +48,7 @@ npm run db:seed         # Run database seed scripts
 - **Styling**: Tailwind CSS 3.4+, shadcn/ui component system
 - **Database**: Supabase (PostgreSQL 15+) with Row Level Security (RLS)
 - **Authentication**: Supabase Auth with middleware protection
+- **Testing**: Jest 29.7+, React Testing Library 14.2+, @testing-library/jest-dom
 - **Data Collection**: Puppeteer 21.9+ (scraping), Tesseract.js 5.0+ (OCR)
 - **Charts**: Recharts 2.10+ for price trend visualization
 - **UI Library**: Radix UI primitives with class-variance-authority
@@ -85,6 +88,14 @@ src/
 │   ├── api/                    # API route handlers
 │   │   ├── analyze/route.ts   # Cost analysis endpoints
 │   │   └── collect/route.ts   # Data collection endpoints
+│   ├── demo/trial/            # Demo mode pages
+│   │   ├── ingredients/page.tsx
+│   │   ├── recipes/page.tsx
+│   │   ├── suppliers/page.tsx
+│   │   ├── reports/page.tsx
+│   │   ├── settings/page.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx
 │   ├── layout.tsx             # Root layout
 │   └── page.tsx              # Landing page
 ├── components/
@@ -111,7 +122,15 @@ src/
 │   │   ├── ingredients/           # Ingredient components
 │   │   ├── recipes/              # Recipe components
 │   │   └── suppliers/           # Supplier components
+│   ├── demo/                  # Demo mode components
+│   │   ├── DemoLayout.tsx
+│   │   ├── AddIngredientModal.tsx
+│   │   ├── EditIngredientModal.tsx
+│   │   ├── DeleteIngredientModal.tsx
+│   │   └── SignupPromptModal.tsx
 │   └── landing/               # Marketing components
+├── contexts/                  # React contexts
+│   └── DemoContext.tsx       # Demo mode state management
 ├── modules/                   # Business logic (interface-first)
 │   ├── data-collector/       # Data collection interfaces
 │   │   ├── collector-interface.ts     # Core collector contracts
@@ -128,8 +147,7 @@ src/
 │       └── notifier-interface.ts     # Notification contracts
 ├── types/                    # Comprehensive TypeScript definitions
 │   ├── index.ts             # Core business entity types
-│   ├── dashboard.ts         # Dashboard-specific types
-│   └── supabase.ts         # Database schema types
+│   └── supabase.ts         # Database schema types (auto-generated)
 ├── lib/                     # Utilities and configurations
 │   ├── supabase.ts         # Supabase client configuration
 │   ├── utils.ts            # Utility functions (cn, pick, omit)
@@ -141,9 +159,13 @@ src/
 ├── hooks/                   # Custom React hooks (future)
 ├── styles/
 │   └── globals.css         # Global Tailwind CSS
-└── utils/                   # Additional utility functions
-    ├── format.ts           # Formatting functions
-    └── validation.ts       # Validation schemas
+├── utils/                   # Additional utility functions
+│   ├── format.ts           # Formatting functions
+│   └── validation.ts       # Validation schemas
+└── __tests__/               # Test infrastructure
+    ├── jest.config.js      # Jest configuration
+    ├── jest.setup.js       # Test environment setup
+    └── **/*.test.ts(x)     # Test files across the codebase
 ```
 
 ### Key Design Decisions
@@ -179,10 +201,10 @@ Before implementing any business logic, review the interface definitions in `src
 
 **Data Collection Module** (`src/modules/data-collector/`):
 - `DataCollector`: Base interface for all collection methods
-- `WebScrapingCollector`: Browser-based price scraping with Puppeteer
-- `OCRCollector`: Invoice processing with Tesseract.js
-- `APICollector`: Third-party API integration
-- `CollectionScheduler`: Automated collection job management
+- `WebScrapingCollector`: Browser-based price scraping (pending - requires puppeteer)
+- `OCRCollector`: Invoice processing (pending - requires tesseract.js)
+- `APICollector`: Third-party API integration (pending)
+- `CollectionScheduler`: Automated collection job management (pending)
 
 **Cost Analysis Module** (`src/modules/cost-analyzer/`):
 - `CostAnalyzer`: Price analysis and trend calculation
@@ -190,14 +212,14 @@ Before implementing any business logic, review the interface definitions in `src
 - Supplier price comparison and recommendation
 
 **Report Generation Module** (`src/modules/report-generator/`):
-- `ReportGenerator`: Base interface for report creation
-- PDF/Excel export functionality for cost reports
-- Chart generation for price trend visualization
+- `ReportGenerator`: Base interface for report creation (pending implementation)
+- PDF/Excel export functionality for cost reports (pending)
+- Chart generation for price trend visualization (pending)
 
 **Notification Service Module** (`src/modules/notification-service/`):
-- `NotificationService`: Multi-channel alert system
-- Email, SMS, and push notification support
-- Price alert threshold management
+- `NotificationService`: Multi-channel alert system (pending implementation)
+- Email, SMS, and push notification support (pending)
+- Price alert threshold management (pending)
 
 ### Type Safety
 Comprehensive TypeScript type system with strict typing across all modules:
@@ -291,7 +313,7 @@ error: "#D32F2F"                /* Loss/Error */
 2. **Module Development**: Define interfaces in `src/modules/` before implementation
 3. **Type Safety**: Always use the predefined types from `src/types/index.ts`
 4. **Component Development**: Build on shadcn/ui primitives, follow the established patterns in `src/components/dashboard/`
-5. **Testing**: Use the established Jest configuration, with coverage reports available
+5. **Testing**: Use Jest + React Testing Library, run `npm test` before commits, maintain >40% coverage
 
 ## MCP Server Integration
 
@@ -379,5 +401,68 @@ The project has 11 MCP servers configured for enhanced development capabilities:
 **근본 원인**: Mock 데이터에 `is_active` 필드가 정의되지 않음
 **해결**: 모든 Mock 데이터 객체에 `is_active: true` 추가
 **재발 방지**: Mock 데이터 생성 시 타입 정의 기반 검증 로직 추가
+
+#### 사례 2: Jest 설정 오류 (테스트 인프라 구축)
+**문제**: "Unknown option 'coverageThresholds'" 오류 발생
+**근본 원인**: Jest 설정 키 이름 오타 (복수형으로 작성)
+**해결**: `coverageThresholds` → `coverageThreshold`로 수정
+**재발 방지**: Jest 공식 문서 참조하여 설정 키 검증
+
+#### 사례 3: NextResponse.json 테스트 환경 미정의
+**문제**: API 라우트 테스트에서 "Response.json is not a function" 오류
+**근본 원인**: Node.js 테스트 환경에서 NextResponse 전역 객체 미정의
+**해결**: `jest.setup.js`에 MockNextResponse 클래스 구현 및 전역 할당
+**재발 방지**: 테스트 환경용 폴리필 체계적 관리
+
+#### 사례 4: ESM 모듈 호환성 문제
+**문제**: "Unexpected token 'export'" 오류 (jose 라이브러리)
+**근본 원인**: Jest가 ES 모듈 형태의 외부 라이브러리를 처리하지 못함
+**해결**: `transformIgnorePatterns`에 대상 모듈들 추가하여 변환 허용
+**재발 방지**: 새로운 ESM 모듈 도입 시 Jest 설정 동시 업데이트
+
+### 테스트 인프라 설정 상세
+
+#### Jest 설정 (`jest.config.js`)
+```javascript
+module.exports = {
+  preset: 'next',
+  testEnvironment: 'jest-environment-jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleDirectories: ['node_modules', '<rootDir>/'],
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  
+  // ESM 모듈 변환 허용
+  transformIgnorePatterns: [
+    'node_modules/(?!(jose|@supabase|uuid)/)'
+  ],
+  
+  // 커버리지 임계값 설정
+  coverageThreshold: {
+    global: {
+      branches: 40,
+      functions: 40,
+      lines: 40,
+      statements: 40
+    }
+  },
+  
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{ts,tsx}'
+  ]
+}
+```
+
+#### 테스트 환경 설정 (`jest.setup.js`)
+- Web API 폴리필 (URL, TextEncoder, TextDecoder, ReadableStream 등)
+- NextResponse/NextRequest 목 구현
+- Supabase 클라이언트 목 설정
+- React Testing Library 전역 설정
+
+#### 현재 테스트 현황
+- **총 테스트 파일**: 13개 (utils, components, constants, mock-data)
+- **테스트 커버리지**: 10.1% (목표: 40%)
+- **테스트 상태**: 기본 인프라 구축 완료, 점진적 확장 필요
 
 이 지침을 따라 모든 문제는 **근본적으로 해결**하고, 같은 문제가 재발하지 않도록 **시스템적 개선**을 함께 수행해야 합니다.

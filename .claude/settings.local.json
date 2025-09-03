@@ -38,7 +38,8 @@
       "Bash(vercel link:*)",
       "Bash(vercel git:*)",
       "Bash(vercel:*)",
-      "Bash(dir D:CursorCostScannersrc)"
+      "Bash(dir D:CursorCostScannersrc)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

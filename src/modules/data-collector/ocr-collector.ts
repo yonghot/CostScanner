@@ -1,4 +1,14 @@
-import { createWorker } from 'tesseract.js'
+// TODO: 향후 구현 예정 - tesseract.js를 사용한 OCR 기능
+// 필요시 'npm install tesseract.js' 실행 후 아래 주석 해제
+// import { createWorker } from 'tesseract.js'
+
+// 임시 스텁 함수 (tesseract.js 설치 전까지 사용)
+const createWorker = async () => ({
+  loadLanguage: async (lang: string) => {},
+  initialize: async (lang: string) => {},
+  recognize: async (image: any) => ({ data: { text: '' } }),
+  terminate: async () => {}
+})
 import { 
   OCRCollector, 
   CollectorConfig, 
@@ -43,7 +53,7 @@ export class OCRCollectorImpl implements OCRCollector {
     try {
       // Tesseract.js 워커 초기화
       if (!this.worker) {
-        this.worker = await createWorker('kor+eng')
+        this.worker = await createWorker()
       }
 
       const { data } = await this.worker.recognize(imagePath)
