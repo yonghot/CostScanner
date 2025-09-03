@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import SignUpForm from '@/components/auth/SignUpForm'
 import AuthLayout from '@/components/auth/AuthLayout'
 
@@ -13,7 +14,9 @@ export default function SignUpPage() {
       title="새 계정 만들기"
       subtitle="식자재 원가 관리를 위한 첫 걸음을 시작하세요"
     >
-      <SignUpForm />
+      <Suspense fallback={<div>Loading...</div>}>
+        <SignUpForm />
+      </Suspense>
     </AuthLayout>
   )
 }

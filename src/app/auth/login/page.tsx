@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import LoginForm from '@/components/auth/LoginForm'
 import AuthLayout from '@/components/auth/AuthLayout'
 
@@ -13,7 +14,9 @@ export default function LoginPage() {
       title="계정에 로그인"
       subtitle="식자재 원가 관리 솔루션에 오신 것을 환영합니다"
     >
-      <LoginForm />
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   )
 }

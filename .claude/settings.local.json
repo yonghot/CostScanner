@@ -37,7 +37,8 @@
       "Read(D:\\d\\Cursor\\CostScanner/**)",
       "Bash(vercel link:*)",
       "Bash(vercel git:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(dir D:CursorCostScannersrc)"
     ],
     "deny": [],
     "ask": []
