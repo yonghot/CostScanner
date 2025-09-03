@@ -1,7 +1,7 @@
 // Import all types from unified type system
 import {
   IngredientUI as Ingredient,
-  SupplierUI as Supplier,
+  SupplierUI,
   RecipeUI as Recipe,
   PricePoint,
   UserSettings,
@@ -170,27 +170,25 @@ export const mockIngredients: Ingredient[] = [
 ];
 
 // 공급업체 모의 데이터
-export const mockSuppliers: Supplier[] = [
+export const mockSuppliers: SupplierUI[] = [
   {
     id: 'sup_001',
     created_at: '2024-08-20',
     updated_at: '2024-08-27',
     name: '신선마트',
-    contact: {
-      phone: '02-1234-5678',
-      email: 'order@sinseon.co.kr',
-      address: '서울시 강남구 테헤란로 123',
-      manager: '김신선'
-    },
+    phone: '02-1234-5678',
+    email: 'order@sinseon.co.kr',
+    address: '서울시 강남구 테헤란로 123',
+    contact_person: '김신선',
+    contact_manager: '김신선',
     rating: 4.5,
-    deliveryTime: '당일배송',
-    minOrder: 50000,
-    paymentTerms: '월말결제',
+    delivery_time: '당일배송',
+    min_order: 50000,
+    payment_terms: '월말결제',
     specialties: ['채소', '과일', '육류'],
     is_active: true,
-    status: 'active',
-    totalOrders: 156,
-    lastOrderDate: '2024-08-25',
+    total_orders: 156,
+    last_order_date: '2024-08-25',
     notes: '품질 우수, 배송 빠름'
   },
   {
@@ -198,21 +196,19 @@ export const mockSuppliers: Supplier[] = [
     created_at: '2024-08-20',
     updated_at: '2024-08-27',
     name: '농협',
-    contact: {
-      phone: '02-2345-6789',
-      email: 'business@nonghyup.co.kr',
-      address: '서울시 서초구 농협중앙회로 456',
-      manager: '박농협'
-    },
+    phone: '02-2345-6789',
+    email: 'business@nonghyup.co.kr',
+    address: '서울시 서초구 농협중앙회로 456',
+    contact_person: '박농협',
+    contact_manager: '박농협',
     rating: 4.8,
-    deliveryTime: '1-2일',
-    minOrder: 100000,
-    paymentTerms: '현금결제시 2% 할인',
+    delivery_time: '1-2일',
+    min_order: 100000,
+    payment_terms: '현금결제시 2% 할인',
     specialties: ['곡류', '채소', '과일'],
     is_active: true,
-    status: 'active',
-    totalOrders: 89,
-    lastOrderDate: '2024-08-26',
+    total_orders: 89,
+    last_order_date: '2024-08-26',
     notes: '국산 농산물 전문, 신뢰도 높음'
   },
   {
@@ -220,21 +216,19 @@ export const mockSuppliers: Supplier[] = [
     created_at: '2024-08-20',
     updated_at: '2024-08-27',
     name: '도매시장',
-    contact: {
-      phone: '02-3456-7890',
-      email: 'info@wholesale.co.kr',
-      address: '서울시 송파구 가락시장로 789',
-      manager: '이도매'
-    },
+    phone: '02-3456-7890',
+    email: 'info@wholesale.co.kr',
+    address: '서울시 송파구 가락시장로 789',
+    contact_person: '이도매',
+    contact_manager: '이도매',
     rating: 4.2,
-    deliveryTime: '2-3일',
-    minOrder: 30000,
-    paymentTerms: '15일 후 결제',
+    delivery_time: '2-3일',
+    min_order: 30000,
+    payment_terms: '15일 후 결제',
     specialties: ['육류', '해산물', '채소'],
     is_active: true,
-    status: 'active',
-    totalOrders: 234,
-    lastOrderDate: '2024-08-24',
+    total_orders: 234,
+    last_order_date: '2024-08-24',
     notes: '가격 경쟁력 우수'
   },
   {
@@ -242,21 +236,19 @@ export const mockSuppliers: Supplier[] = [
     created_at: '2024-08-20',
     updated_at: '2024-08-27',
     name: '한우마을',
-    contact: {
-      phone: '02-4567-8901',
-      email: 'order@hanwoo.co.kr',
-      address: '경기도 안성시 한우로 123',
-      manager: '최한우'
-    },
+    phone: '02-4567-8901',
+    email: 'order@hanwoo.co.kr',
+    address: '경기도 안성시 한우로 123',
+    contact_person: '최한우',
+    contact_manager: '최한우',
     rating: 4.9,
-    deliveryTime: '1-2일',
-    minOrder: 200000,
-    paymentTerms: '월말결제',
+    delivery_time: '1-2일',
+    min_order: 200000,
+    payment_terms: '월말결제',
     specialties: ['한우', '국산소고기'],
     is_active: true,
-    status: 'active',
-    totalOrders: 67,
-    lastOrderDate: '2024-08-23',
+    total_orders: 67,
+    last_order_date: '2024-08-23',
     notes: '프리미엄 한우 전문'
   }
 ];
@@ -285,6 +277,7 @@ export const mockRecipes: Recipe[] = [
     cook_time: 15,
     difficulty: 'medium',
     tags: ['한식', '인기메뉴', '육류'],
+    is_active: true,
     updated_at: '2024-08-27'
   },
   {
@@ -308,6 +301,7 @@ export const mockRecipes: Recipe[] = [
     cook_time: 10,
     difficulty: 'easy',
     tags: ['한식', '간편식', '볶음밥'],
+    is_active: true,
     updated_at: '2024-08-27'
   },
   {
@@ -330,6 +324,7 @@ export const mockRecipes: Recipe[] = [
     cook_time: 20,
     difficulty: 'easy',
     tags: ['한식', '국물요리', '가정식'],
+    is_active: true,
     updated_at: '2024-08-27'
   }
 ];
@@ -338,14 +333,16 @@ export const mockRecipes: Recipe[] = [
 export const mockReports: CostReport[] = [
   {
     id: 'rep_001',
-    title: '2024년 8월 원가 분석',
-    type: 'monthly',
-    period: {
-      start: '2024-08-01',
-      end: '2024-08-31'
-    },
+    user_id: 'user_001',
+    report_type: 'monthly',
+    date_from: '2024-08-01',
+    date_to: '2024-08-31',
+    total_ingredients: 8,
+    total_cost: 2450000,
+    average_cost: 306250,
+    cost_trend: -5.2,
     data: {
-      total_cost: 2450000,
+      title: '2024년 8월 원가 분석',
       costChange: -5.2,
       topExpensiveIngredients: [
         { name: '한우등심', cost: 450000, percentage: 18.4 },
@@ -366,7 +363,8 @@ export const mockReports: CostReport[] = [
         { description: '계절 식자재 활용으로', potentialSavings: 42000 }
       ]
     },
-    createdAt: '2024-08-27'
+    created_at: '2024-08-27',
+    updated_at: '2024-08-27'
   }
 ];
 
@@ -374,51 +372,43 @@ export const mockReports: CostReport[] = [
 export const mockPriceAlerts: PriceAlert[] = [
   {
     id: 'alert_001',
+    user_id: 'user_001',
     ingredient_id: 'ing_001',
-    ingredientName: '한우등심',
-    alertType: 'price_increase',
-    threshold: 42000,
-    currentValue: 45000,
-    isActive: true,
-    lastTriggered: '2024-08-25',
-    notifications: {
-      email: true,
-      browser: true,
-      sms: false
-    }
+    alert_type: 'price_increase',
+    threshold_price: 42000,
+    is_active: true,
+    notification_methods: ['email', 'push'],
+    created_at: '2024-08-20',
+    updated_at: '2024-08-25'
   },
   {
     id: 'alert_002',
+    user_id: 'user_001',
     ingredient_id: 'ing_006',
-    ingredientName: '참기름',
-    alertType: 'stock_low',
-    threshold: 5,
-    currentValue: 3,
-    isActive: true,
-    lastTriggered: '2024-08-26',
-    notifications: {
-      email: true,
-      browser: false,
-      sms: true
-    }
+    alert_type: 'price_drop',
+    threshold_percentage: 10,
+    is_active: true,
+    notification_methods: ['email', 'sms'],
+    created_at: '2024-08-20',
+    updated_at: '2024-08-26'
   }
 ];
 
 // 사용자 설정 모의 데이터
 export const mockUserSettings: UserSettings = {
-  id: 'user_001',
+  user_id: 'user_001',
   profile: {
     name: '김요리',
     email: 'chef.kim@restaurant.co.kr',
-    businessName: '맛있는 식당',
-    businessType: '한식당',
+    business_name: '맛있는 식당',
+    business_type: '한식당',
     phone: '010-1234-5678'
   },
   preferences: {
     currency: 'KRW',
     language: 'ko',
     timezone: 'Asia/Seoul',
-    dateFormat: 'YYYY-MM-DD',
+    date_format: 'YYYY-MM-DD',
     notifications: {
       email: true,
       browser: true,
@@ -427,9 +417,8 @@ export const mockUserSettings: UserSettings = {
   },
   subscription: {
     plan: 'pro',
-    is_active: true,
     status: 'active',
-    expiresAt: '2024-12-31',
+    expires_at: '2024-12-31',
     features: [
       '무제한 식자재 등록',
       '실시간 가격 알림',
@@ -442,14 +431,14 @@ export const mockUserSettings: UserSettings = {
 
 // 대시보드 통계 모의 데이터
 export const mockDashboardStats: DashboardStats = {
-  totalIngredients: mockIngredients.length,
-  totalRecipes: mockRecipes.length,
-  totalSuppliers: mockSuppliers.length,
-  monthlySpending: 2450000,
-  avgCostPerRecipe: 9822,
-  costSavingsThisMonth: 145000,
-  priceAlertsActive: mockPriceAlerts.filter(alert => alert.isActive).length,
-  topExpensiveIngredient: {
+  total_ingredients: mockIngredients.length,
+  total_recipes: mockRecipes.length,
+  total_suppliers: mockSuppliers.length,
+  monthly_spending: 2450000,
+  avg_cost_per_recipe: 9822,
+  cost_savings_this_month: 145000,
+  price_alerts_active: mockPriceAlerts.filter(alert => alert.is_active).length,
+  top_expensive_ingredient: {
     name: '한우등심',
     price: 45000,
     change: 7.1

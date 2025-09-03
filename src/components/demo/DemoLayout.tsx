@@ -130,11 +130,11 @@ export default function DemoLayout({
                   <div className="text-center space-y-2">
                     <div className="text-sm font-semibold text-primary-dark">데모 계정 정보</div>
                     <div className="text-xs text-primary">
-                      <div>{demoState.user.company}</div>
+                      <div>{demoState.user.business_name}</div>
                       <div>{demoState.user.email}</div>
                       <div className="mt-1">
                         <Badge variant="outline" className="text-xs">
-                          {demoState.user.subscription_tier === 'pro' ? '프로 플랜' : '무료 플랜'}
+                          무료 체험
                         </Badge>
                       </div>
                     </div>

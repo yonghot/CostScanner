@@ -53,28 +53,28 @@ export default function DashboardPreview() {
   const stats = [
     {
       name: '등록된 레시피',
-      value: mockDashboardStats.totalRecipes,
+      value: mockDashboardStats.total_recipes,
       icon: ChefHat,
       color: 'text-primary',
       bgColor: 'bg-primary/10'
     },
     {
       name: '활성 알림',
-      value: mockDashboardStats.priceAlertsActive,
+      value: mockDashboardStats.price_alerts_active,
       icon: Bell,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100'
     },
     {
       name: '월간 지출',
-      value: formatCurrency(mockDashboardStats.monthlySpending),
+      value: formatCurrency(mockDashboardStats.monthly_spending),
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
       name: '이달 절약액',
-      value: formatCurrency(mockDashboardStats.costSavingsThisMonth),
+      value: formatCurrency(mockDashboardStats.cost_savings_this_month),
       icon: TrendingDown,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'

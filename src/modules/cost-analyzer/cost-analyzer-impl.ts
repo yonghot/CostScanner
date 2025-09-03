@@ -42,7 +42,7 @@ export class CostAnalyzerImpl implements CostAnalyzer {
       // 차트 데이터 변환
       const chartData: ChartDataPoint[] = priceData.map(item => ({
         date: item.date,
-        price: Number(item.avg_price),
+        value: Number(item.avg_price),
         supplier: 'average' // 평균 가격이므로
       }))
 

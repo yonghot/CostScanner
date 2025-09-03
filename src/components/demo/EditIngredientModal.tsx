@@ -22,15 +22,16 @@ interface EditIngredientModalProps {
 }
 
 const categoryOptions: { value: IngredientCategory; label: string }[] = [
-  { value: 'vegetables', label: '채소류' },
-  { value: 'meat', label: '육류' },
-  { value: 'seafood', label: '수산물' },
-  { value: 'dairy', label: '유제품' },
-  { value: 'grains', label: '곡류' },
-  { value: 'seasonings', label: '조미료' },
-  { value: 'processed', label: '가공품' },
-  { value: 'beverages', label: '음료' },
-  { value: 'others', label: '기타' }
+  { value: '채소', label: '채소류' },
+  { value: '육류', label: '육류' },
+  { value: '해산물', label: '수산물' },
+  { value: '유제품', label: '유제품' },
+  { value: '곡류', label: '곡류' },
+  { value: '조미료', label: '조미료' },
+  { value: '과일', label: '과일' },
+  { value: '향신료', label: '향신료' },
+  { value: '난류', label: '난류' },
+  { value: '기타', label: '기타' }
 ]
 
 export default function EditIngredientModal({ ingredient, open, onOpenChange }: EditIngredientModalProps) {
@@ -38,10 +39,9 @@ export default function EditIngredientModal({ ingredient, open, onOpenChange }: 
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    category: 'vegetables' as IngredientCategory,
+    category: '채소' as IngredientCategory,
     unit: '',
     description: '',
-    storage_info: '',
     is_active: true
   })
 
@@ -50,10 +50,9 @@ export default function EditIngredientModal({ ingredient, open, onOpenChange }: 
     if (ingredient) {
       setFormData({
         name: ingredient.name,
-        category: ingredient.category,
+        category: ingredient.category as IngredientCategory,
         unit: ingredient.unit,
         description: ingredient.description || '',
-        storage_info: ingredient.storage_info || '',
         is_active: ingredient.is_active
       })
     }
@@ -71,8 +70,7 @@ export default function EditIngredientModal({ ingredient, open, onOpenChange }: 
         name: formData.name.trim(),
         category: formData.category,
         unit: formData.unit.trim(),
-        description: formData.description.trim() || null,
-        storage_info: formData.storage_info.trim() || null,
+        description: formData.description.trim() || undefined,
         is_active: formData.is_active
       })
 
@@ -156,16 +154,6 @@ export default function EditIngredientModal({ ingredient, open, onOpenChange }: 
               placeholder="식자재에 대한 추가 정보나 설명을 입력하세요"
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-storage_info">보관 정보</Label>
-            <Input
-              id="edit-storage_info"
-              value={formData.storage_info}
-              onChange={handleChange('storage_info')}
-              placeholder="예: 냉장 보관, 상온 보관, 냉동 보관 등"
             />
           </div>
 
