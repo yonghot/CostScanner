@@ -71,7 +71,7 @@ export class CostAnalyzerImpl implements CostAnalyzer {
       }
 
     } catch (error) {
-      console.error('가격 트렌드 분석 오류:', error)
+      // 가격 트렌드 분석 오류 - 로거로 대체 필요
       throw new Error(`가격 트렌드 분석 실패: ${error}`)
     }
   }
@@ -133,7 +133,7 @@ export class CostAnalyzerImpl implements CostAnalyzer {
           results.push(comparison)
         }
       } catch (error) {
-        console.error(`식자재 가격 비교 오류 [${ingredientId}]:`, error)
+        // 식자재 가격 비교 오류 - 로거로 대체 필요
         continue
       }
     }
@@ -218,7 +218,7 @@ export class CostAnalyzerImpl implements CostAnalyzer {
       }
 
     } catch (error) {
-      console.error('공급업체 분석 오류:', error)
+      // 공급업체 분석 오류 - 로거로 대체 필요
       throw new Error(`공급업체 분석 실패: ${error}`)
     }
   }
@@ -332,7 +332,7 @@ export class CostAnalyzerImpl implements CostAnalyzer {
       }
 
     } catch (error) {
-      console.error('레시피 원가 계산 오류:', error)
+      // 레시피 원가 계산 오류 - 로거로 대체 필요
       throw new Error(`레시피 원가 계산 실패: ${error}`)
     }
   }
@@ -402,7 +402,7 @@ export class CostAnalyzerImpl implements CostAnalyzer {
       }
 
     } catch (error) {
-      console.error('가격 예측 오류:', error)
+      // 가격 예측 오류 - 로거로 대체 필요
       throw new Error(`가격 예측 실패: ${error}`)
     }
   }

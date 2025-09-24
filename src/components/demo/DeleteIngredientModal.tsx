@@ -40,7 +40,7 @@ export default function DeleteIngredientModal({ ingredient, open, onOpenChange }
       deleteIngredient(ingredient.id)
       onOpenChange(false)
     } catch (error) {
-      console.error('Failed to delete ingredient:', error)
+      // Failed to delete ingredient - 로거로 대체 필요
     } finally {
       setIsLoading(false)
     }

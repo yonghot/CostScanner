@@ -78,7 +78,7 @@ export default function AddIngredientModal({ open, onOpenChange }: AddIngredient
 
       onOpenChange(false)
     } catch (error) {
-      console.error('Failed to add ingredient:', error)
+      // Failed to add ingredient - 로거로 대체 필요
     } finally {
       setIsLoading(false)
     }

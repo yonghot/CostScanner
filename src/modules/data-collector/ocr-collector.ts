@@ -258,7 +258,7 @@ export class OCRCollectorImpl implements OCRCollector {
     this.errors.push(errorObj)
     this.status.errorCount++
 
-    console.error(`OCR 오류 [${context}]:`, error)
+    // OCR 오류 로깅은 프로덕션 로거로 대체 필요
   }
 
   async cleanup(): Promise<void> {

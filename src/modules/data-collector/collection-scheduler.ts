@@ -1,12 +1,13 @@
-import { 
-  CollectionScheduler, 
+import {
+  CollectionScheduler,
   CollectionSchedule,
-  DataCollector 
+  DataCollector
 } from './collector-interface'
 import { WebScrapingCollectorImpl } from './web-scraping-collector'
 import { OCRCollectorImpl } from './ocr-collector'
 import { APICollectorImpl } from './api-collector'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface ScheduledJob {
   id: string
@@ -120,14 +121,14 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
     job.lastRun = new Date()
     
     try {
-      console.log(`스케줄 작업 시작: ${job.schedule.name}`)
+      logger.info(`스케줄 작업 시작: ${job.schedule.name}`, { module: 'collection-scheduler' })
       
       // 공급업체 및 식자재 정보 로드
       const suppliers = await this.getSuppliersByIds(job.schedule.suppliers)
       const ingredients = await this.getIngredientsByIds(job.schedule.ingredients)
 
       if (suppliers.length === 0 || ingredients.length === 0) {
-        console.warn(`스케줄 작업 건너뛰기: 유효한 공급업체 또는 식자재 없음`)
+        logger.warn(`스케줄 작업 건너뛰기: 유효한 공급업체 또는 식자재 없음`, { module: 'collection-scheduler' })
         return
       }
 
@@ -139,10 +140,10 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
           
           if (validRecords.length > 0) {
             await this.savePriceRecords(validRecords)
-            console.log(`${supplier.name}에서 ${validRecords.length}개 가격 정보 수집`)
+            logger.info(`${supplier.name}에서 ${validRecords.length}개 가격 정보 수집`, { module: 'collection-scheduler', action: 'collect' })
           }
         } catch (supplierError) {
-          console.error(`${supplier.name} 데이터 수집 실패:`, supplierError)
+          logger.error(`${supplier.name} 데이터 수집 실패`, supplierError as Error, { module: 'collection-scheduler', action: 'collect' })
         }
       }
 
@@ -156,7 +157,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       })
 
     } catch (error) {
-      console.error(`스케줄 작업 실행 오류 [${job.schedule.name}]:`, error)
+      logger.error(`스케줄 작업 실행 오류: ${job.schedule.name}`, error as Error, { module: 'collection-scheduler' })
     } finally {
       job.isRunning = false
     }
@@ -213,7 +214,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       })
 
     if (error) {
-      console.error('스케줄 저장 오류:', error)
+      logger.error('스케줄 저장 오류', error as Error, { module: 'collection-scheduler' })
     }
     */
   }
@@ -227,7 +228,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       .eq('id', scheduleId)
 
     if (error) {
-      console.error('스케줄 삭제 오류:', error)
+      logger.error('스케줄 삭제 오류', error as Error, { module: 'collection-scheduler' })
     }
     */
   }
@@ -247,7 +248,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       .eq('id', scheduleId)
 
     if (error) {
-      console.error('스케줄 업데이트 오류:', error)
+      logger.error('스케줄 업데이트 오류', error as Error, { module: 'collection-scheduler' })
     }
     */
   }
@@ -260,7 +261,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       .eq('is_active', true)
 
     if (error) {
-      console.error('공급업체 조회 오류:', error)
+      logger.error('공급업체 조회 오류', error as Error, { module: 'collection-scheduler' })
       return []
     }
 
@@ -275,7 +276,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       .eq('is_active', true)
 
     if (error) {
-      console.error('식자재 조회 오류:', error)
+      logger.error('식자재 조회 오류', error as Error, { module: 'collection-scheduler' })
       return []
     }
 
@@ -288,7 +289,7 @@ export class CollectionSchedulerImpl implements CollectionScheduler {
       .insert(priceRecords)
 
     if (error) {
-      console.error('가격 정보 저장 오류:', error)
+      logger.error('가격 정보 저장 오류', error as Error, { module: 'collection-scheduler' })
     }
   }
 

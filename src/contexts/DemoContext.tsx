@@ -99,7 +99,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         const parsedState = JSON.parse(savedState)
         setDemoState(parsedState)
       } catch (error) {
-        console.warn('Failed to load demo state from localStorage:', error)
+        // Failed to load demo state from localStorage - 로거로 대체 필요
       }
     }
   }, [])

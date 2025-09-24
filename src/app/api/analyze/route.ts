@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/supabase'
 import { CostAnalyzerImpl } from '@/modules/cost-analyzer/cost-analyzer-impl'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid analysis type' }, { status: 400 })
     }
   } catch (error) {
-    console.error('Analysis API Error:', error)
+    logger.error('Analysis API Error', error as Error, { module: 'api/analyze' })
     return NextResponse.json(
       { error: '분석 처리 중 오류가 발생했습니다.' },
       { status: 500 }

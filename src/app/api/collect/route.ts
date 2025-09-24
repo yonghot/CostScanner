@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/supabase'
 import { CollectionSchedulerImpl } from '@/modules/data-collector/collection-scheduler'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
   } catch (error) {
-    console.error('Collection API Error:', error)
+    logger.error('Collection API Error', error as Error, { module: 'api/collect' })
     return NextResponse.json(
       { error: '데이터 수집 처리 중 오류가 발생했습니다.' },
       { status: 500 }

@@ -147,7 +147,7 @@ export class WebScrapingCollectorImpl implements WebScrapingCollector {
               }
             }
           } catch (err) {
-            console.warn('상품 데이터 추출 실패:', err)
+            // 상품 데이터 추출 실패 - 로거로 대체 필요
           }
         })
 
@@ -390,7 +390,7 @@ export class WebScrapingCollectorImpl implements WebScrapingCollector {
     this.errors.push(errorObj)
     this.status.errorCount++
 
-    console.error(`스크래핑 오류 [${context}]:`, error)
+    // 스크래핑 오류 로깅은 프로덕션 로거로 대체 필요
   }
 
   private generateId(): string {

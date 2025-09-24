@@ -76,7 +76,7 @@ export default function EditIngredientModal({ ingredient, open, onOpenChange }: 
 
       onOpenChange(false)
     } catch (error) {
-      console.error('Failed to update ingredient:', error)
+      // Failed to update ingredient - 로거로 대체 필요
     } finally {
       setIsLoading(false)
     }

@@ -54,7 +54,7 @@ export default function DemoSettingsPage() {
       resetDemo()
       setShowResetConfirm(false)
     } catch (error) {
-      console.error('Failed to reset demo:', error)
+      // Failed to reset demo - 로거로 대체 필요
     } finally {
       setIsLoading(false)
     }

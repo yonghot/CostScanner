@@ -120,7 +120,7 @@ export default function SuppliersTable({ suppliers, onEdit, onDelete, onContact 
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               onChange={(e) => {
                 // Filter by specialty - this would need more complex logic
-                console.log('Filter by specialty:', e.target.value);
+                // TODO: 실제 필터 로직 구현 필요
               }}
             >
               <option value="">전체</option>
