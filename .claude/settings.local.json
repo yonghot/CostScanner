@@ -40,7 +40,9 @@
       "Bash(vercel:*)",
       "Bash(dir D:CursorCostScannersrc)",
       "Bash(git restore:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(echo:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
