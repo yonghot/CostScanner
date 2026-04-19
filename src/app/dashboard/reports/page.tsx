@@ -1,315 +1,555 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { mockIngredients, mockRecipes, mockSuppliers } from '@/lib/mock-data';
 import { formatPrice, formatNumberToKorean } from '@/lib/utils/formatting';
+import { PriceChange } from '@/components/ui/charts/PriceChange';
+import { chartGridColor, chartSeriesColors, chartTextColor } from '@/lib/chart-colors';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
+  ShoppingCart,
+  Zap,
+  RefreshCw,
+  Download,
+  Sparkles,
+  TrendingUp,
+  TrendingDown,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// ─── 26주 멀티라인 시뮬레이션 (Phase 3 §3.5) ────────────────
+function generateTrendSeries() {
+  const weeks = 26;
+  const make = (seed: number, amp: number, base = 100) => {
+    const arr: number[] = [];
+    let v = base;
+    for (let i = 0; i < weeks; i++) {
+      v += Math.sin(i / 3 + seed) * amp + i * 0.4 + Math.sin(i * seed) * 1.5;
+      arr.push(v);
+    }
+    return arr;
+  };
+  const veg = make(0.5, 3);
+  const meat = make(1.2, 2);
+  const grain = make(0.2, 1);
+  return Array.from({ length: weeks }, (_, i) => ({
+    week: `W${i + 1}`,
+    채소: Math.round(veg[i] * 10) / 10,
+    육류: Math.round(meat[i] * 10) / 10,
+    곡물: Math.round(grain[i] * 10) / 10,
+  }));
+}
+
+// ─── 계절성 히트맵 데이터 (12개월 × 6 카테고리) ──────────────
+const HEATMAP_CATEGORIES = ['채소', '육류', '생선', '유제품', '곡물', '조미료'];
+const HEATMAP_MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+const HEATMAP_DATA: number[][] = [
+  [0.7, 0.8, 0.6, 0.3, 0.2, 0.3, 0.5, 0.8, 0.4, 0.2, 0.5, 0.7], // 채소
+  [0.4, 0.5, 0.5, 0.5, 0.6, 0.7, 0.6, 0.6, 0.7, 0.8, 0.9, 1.0], // 육류
+  [0.3, 0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 0.9, 0.6, 0.4, 0.3, 0.5], // 생선
+  [0.5, 0.5, 0.4, 0.4, 0.5, 0.6, 0.7, 0.7, 0.5, 0.4, 0.5, 0.6], // 유제품
+  [0.3, 0.3, 0.3, 0.4, 0.4, 0.5, 0.6, 0.5, 0.4, 0.3, 0.3, 0.4], // 곡물
+  [0.4, 0.4, 0.5, 0.5, 0.5, 0.6, 0.7, 0.7, 0.6, 0.5, 0.5, 0.6], // 조미료
+];
+
+const cellColor = (v: number) => {
+  if (v < 0.33) return `rgba(31, 157, 85, ${0.15 + v * 1.5})`;
+  if (v < 0.66) return `rgba(242, 169, 0, ${0.15 + (v - 0.33) * 2})`;
+  return `rgba(255, 122, 0, ${0.25 + (v - 0.66) * 2})`;
+};
+
+const ACTION_ITEMS = [
+  {
+    tag: '매입 전략',
+    icon: ShoppingCart,
+    color: 'primary' as const,
+    title: '마늘 선구매 권장',
+    desc: '다음 4주간 +12% 상승 예측. 이번 주 내 2주치 재고 확보 시 ₩38만원 절약.',
+  },
+  {
+    tag: '메뉴 조정',
+    icon: Zap,
+    color: 'warning' as const,
+    title: '국밥 마진 재검토',
+    desc: '돼지 사골 가격이 계속 상승 중. 판매가 500원 조정 또는 양 조절을 권장합니다.',
+  },
+  {
+    tag: '공급처 변경',
+    icon: RefreshCw,
+    color: 'success' as const,
+    title: '농협 하나로로 전환',
+    desc: '양파·대파 최저가 계약 가능. 월 ₩124,000 절약이 예상됩니다.',
+  },
+];
+
+const COLOR_BAR: Record<'primary' | 'warning' | 'success', string> = {
+  primary: 'border-l-primary',
+  warning: 'border-l-warning',
+  success: 'border-l-success',
+};
+const COLOR_TEXT: Record<'primary' | 'warning' | 'success', string> = {
+  primary: 'text-primary-600',
+  warning: 'text-warning',
+  success: 'text-success',
+};
+const COLOR_BG: Record<'primary' | 'warning' | 'success', string> = {
+  primary: 'bg-primary-50 text-primary-700',
+  warning: 'bg-warning/10 text-warning',
+  success: 'bg-success/10 text-success',
+};
+
+const PERIODS = ['1개월', '3개월', '26주', '1년'] as const;
+type Period = typeof PERIODS[number];
 
 export default function ReportsPageRoute() {
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [selectedReport, setSelectedReport] = useState('cost_trend');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('26주');
 
-  // Calculate report data
+  // ── 데이터 계산 (기존 로직 유지) ────────────────────────
   const totalIngredients = mockIngredients.length;
   const totalRecipes = mockRecipes.length;
   const totalSuppliers = mockSuppliers.length;
-  
-  const averageIngredientCost = mockIngredients.reduce((sum, ing) => sum + ing.current_price, 0) / totalIngredients;
-  const totalInventoryValue = mockIngredients.reduce((sum, ing) => sum + (ing.current_price * 10), 0); // 임시로 기본 재고량 10 사용
-  
-  const highValueIngredients = mockIngredients
-    .filter(ing => ing.current_price > averageIngredientCost)
-    .sort((a, b) => b.current_price - a.current_price)
-    .slice(0, 5);
 
-  const topProfitableRecipes = mockRecipes
-    .filter(recipe => recipe.profit_margin && recipe.profit_margin > 0)
-    .sort((a, b) => (b.profit_margin || 0) - (a.profit_margin || 0))
-    .slice(0, 5);
+  const averageIngredientCost =
+    mockIngredients.reduce((sum, ing) => sum + ing.current_price, 0) / totalIngredients;
+  const totalInventoryValue = mockIngredients.reduce(
+    (sum, ing) => sum + ing.current_price * 10,
+    0
+  );
+
+  const trendData = useMemo(() => generateTrendSeries(), []);
+  const lastTrend = trendData[trendData.length - 1];
 
   const priceChanges = mockIngredients
-    .filter(ing => ing.price_history.length >= 2)
-    .map(ing => {
+    .filter((ing) => ing.price_history.length >= 2)
+    .map((ing) => {
       const current = ing.price_history[ing.price_history.length - 1].price;
       const previous = ing.price_history[ing.price_history.length - 2].price;
-      const change = ((current - previous) / previous) * 100;
-      return { name: ing.name, change, current, previous };
+      const change = (current - previous) / previous;
+      return { name: ing.name, change, current, previous, category: ing.category };
     })
-    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
-    .slice(0, 10);
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
 
-  const supplierPerformance = mockSuppliers.map(supplier => {
-    const suppliedIngredients = mockIngredients.filter(ing => ing.suppliers.includes(supplier.id));
-    return {
-      name: supplier.name,
-      rating: supplier.rating,
-      ingredientCount: suppliedIngredients.length,
-      avgDeliveryTime: supplier.delivery_time,
-      totalValue: suppliedIngredients.reduce((sum, ing) => sum + ing.current_price, 0)
-    };
-  }).sort((a, b) => b.rating - a.rating);
+  const upMovers = priceChanges.filter((p) => p.change > 0).slice(0, 5);
+  const downMovers = priceChanges.filter((p) => p.change < 0).slice(0, 5);
 
   const downloadReport = (format: 'csv' | 'pdf') => {
-    // Simulate download
     alert(`${format.toUpperCase()} 리포트를 다운로드합니다.`);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      {/* ── 헤더 ─────────────────────────────────── */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">리포트</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            원가 분석 리포트를 생성하고 트렌드를 확인하세요
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600">
+            리포트
+          </div>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-ink-900">
+            시장 인사이트
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            당신의 메뉴 · 원가 · 시장 데이터를 교차 분석합니다
           </p>
         </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => downloadReport('csv')}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            CSV 다운로드
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-0.5 rounded-lg bg-ink-50 p-1">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setSelectedPeriod(p)}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-xs font-bold transition-all',
+                  selectedPeriod === p
+                    ? 'bg-white text-ink-900 shadow-soft-1'
+                    : 'text-ink-500 hover:text-ink-800'
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => downloadReport('pdf')}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3 py-2 text-xs font-bold text-ink-700 hover:bg-ink-50"
           >
-            PDF 다운로드
+            <Download size={14} /> PDF
+          </button>
+          <button
+            onClick={() => downloadReport('csv')}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white shadow-brand hover:bg-primary-600"
+          >
+            <Download size={14} /> CSV
           </button>
         </div>
       </div>
 
-      {/* Report Controls */}
-      <div className="bg-white p-4 rounded-lg border">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── 요약 카드 ────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <SummaryCard
+          label="총 재고 가치"
+          value={formatNumberToKorean(totalInventoryValue)}
+          accent="primary"
+        />
+        <SummaryCard
+          label="평균 식자재 단가"
+          value={formatPrice(averageIngredientCost)}
+          accent="success"
+        />
+        <SummaryCard label="등록된 레시피" value={`${totalRecipes}개`} accent="violet" />
+        <SummaryCard label="활성 공급업체" value={`${totalSuppliers}개`} accent="warning" />
+      </div>
+
+      {/* ── 26주 트렌드 차트 ─────────────────────── */}
+      <div className="rounded-2xl border bg-card p-6 shadow-soft-1">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              리포트 유형
-            </label>
-            <select
-              value={selectedReport}
-              onChange={(e) => setSelectedReport(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="cost_trend">원가 트렌드 분석</option>
-              <option value="profit_analysis">수익성 분석</option>
-              <option value="supplier_performance">공급업체 성과</option>
-              <option value="inventory_report">재고 현황</option>
-              <option value="price_changes">가격 변동 현황</option>
-            </select>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600">
+              26주 트렌드 · 카테고리별
+            </div>
+            <h2 className="mt-1 text-xl font-extrabold text-ink-900">
+              시장 지수는 어떻게 움직이고 있나요?
+            </h2>
+            <p className="mt-1 text-sm text-ink-500">
+              2024 W27 기준(=100) 상대 가격 지수
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              분석 기간
-            </label>
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="week">지난 7일</option>
-              <option value="month">지난 30일</option>
-              <option value="quarter">지난 3개월</option>
-              <option value="year">지난 1년</option>
-            </select>
+          <div className="flex gap-5">
+            <IndexBadge label="채소 지수" value={lastTrend.채소} color={chartSeriesColors[2]} />
+            <IndexBadge label="육류 지수" value={lastTrend.육류} color={chartSeriesColors[5]} />
+            <IndexBadge label="곡물 지수" value={lastTrend.곡물} color={chartSeriesColors[3]} />
           </div>
+        </div>
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trendData} margin={{ top: 8, right: 24, left: -16, bottom: 0 }}>
+              <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="week"
+                tick={{ fontSize: 11, fill: chartTextColor }}
+                tickLine={false}
+                axisLine={false}
+                interval={3}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: chartTextColor }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: `1px solid ${chartGridColor}`,
+                  fontSize: 12,
+                }}
+              />
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="채소"
+                stroke={chartSeriesColors[2]}
+                strokeWidth={2.4}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="육류"
+                stroke={chartSeriesColors[5]}
+                strokeWidth={2.4}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="곡물"
+                stroke={chartSeriesColors[3]}
+                strokeWidth={2.4}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-primary/10 rounded-md">
-              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">총 재고 가치</p>
-              <p className="text-2xl font-bold text-primary">{formatNumberToKorean(totalInventoryValue)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-md">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">평균 식자재 단가</p>
-              <p className="text-2xl font-bold text-green-600">{formatPrice(averageIngredientCost)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-md">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">등록된 레시피</p>
-              <p className="text-2xl font-bold text-purple-600">{totalRecipes}개</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-md">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">활성 공급업체</p>
-              <p className="text-2xl font-bold text-orange-600">{totalSuppliers}개</p>
-            </div>
-          </div>
-        </div>
+      {/* ── Top Movers (2 컬럼) ──────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <MoversCard title="가격 급등 품목" subtitle="지난 4주" up items={upMovers} />
+        <MoversCard title="가격 하락 품목" subtitle="지난 4주" up={false} items={downMovers} />
       </div>
 
-      {/* Report Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Price Changes Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">가격 변동 현황</h3>
-          <div className="space-y-3">
-            {priceChanges.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">
-                    {formatPrice(item.previous)} → {formatPrice(item.current)}
-                  </span>
-                  <span className={`text-sm font-semibold ${
-                    item.change > 0 ? 'text-red-600' : item.change < 0 ? 'text-green-600' : 'text-gray-600'
-                  }`}>
-                    {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
+      {/* ── 계절성 히트맵 ────────────────────────── */}
+      <div className="rounded-2xl border bg-card p-6 shadow-soft-1">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600">
+              계절성 히트맵
+            </div>
+            <h2 className="mt-1 text-xl font-extrabold text-ink-900">
+              언제 무엇이 비싸고, 언제 쌀까요?
+            </h2>
+            <p className="mt-1 text-sm text-ink-500">
+              최근 3년 평균 기준 — 메뉴 기획과 매입 타이밍 힌트
+            </p>
+          </div>
+          <div className="max-w-xs rounded-xl bg-primary-50 px-4 py-3">
+            <div className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold text-primary-700">
+              <Sparkles size={13} /> 인사이트
+            </div>
+            <p className="text-xs leading-relaxed text-primary-700">
+              생선은 <b>7~8월</b>에 가장 비싸요. 여름 메뉴를 기획한다면{' '}
+              <b>채소·곡물 중심</b>이 유리합니다.
+            </p>
+          </div>
+        </div>
+
+        <Heatmap />
+
+        {/* 범례 */}
+        <div className="mt-4 flex items-center gap-2 text-[11px] text-ink-500">
+          <span>낮음</span>
+          <div className="flex gap-0.5">
+            {[0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 0.95].map((v, i) => (
+              <div
+                key={i}
+                className="h-3 w-7 rounded-sm"
+                style={{ background: cellColor(v) }}
+              />
             ))}
           </div>
+          <span>높음</span>
         </div>
+      </div>
 
-        {/* Top Profitable Recipes */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">수익성 높은 레시피</h3>
-          <div className="space-y-3">
-            {topProfitableRecipes.map((recipe, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">{recipe.name}</span>
-                  <div className="text-xs text-gray-500">{recipe.category}</div>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-semibold text-green-600">
-                    {recipe.profit_margin}%
+      {/* ── 액션 아이템 3카드 ────────────────────── */}
+      <div>
+        <h3 className="mb-3 text-lg font-extrabold text-ink-900">이번 주 액션 아이템</h3>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {ACTION_ITEMS.map((a, i) => {
+            const IconCmp = a.icon;
+            return (
+              <div
+                key={i}
+                className={cn(
+                  'rounded-2xl border border-l-4 bg-card p-5 shadow-soft-1',
+                  COLOR_BAR[a.color]
+                )}
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-xl',
+                      COLOR_BG[a.color]
+                    )}
+                  >
+                    <IconCmp size={16} />
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[11px] font-bold uppercase tracking-[0.12em]',
+                      COLOR_TEXT[a.color]
+                    )}
+                  >
+                    {a.tag}
                   </span>
-                  {recipe.profit_amount && (
-                    <div className="text-xs text-gray-500">
-                      {formatPrice(recipe.profit_amount)} 수익
-                    </div>
+                </div>
+                <div className="text-base font-extrabold text-ink-900">{a.title}</div>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-600">{a.desc}</p>
+                <button
+                  type="button"
+                  className={cn(
+                    'mt-3 inline-flex items-center text-xs font-bold hover:underline',
+                    COLOR_TEXT[a.color]
                   )}
-                </div>
+                >
+                  자세히 보기 →
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* High Value Ingredients */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">고가 식자재</h3>
-          <div className="space-y-3">
-            {highValueIngredients.map((ingredient, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">{ingredient.name}</span>
-                  <div className="text-xs text-gray-500">{ingredient.category}</div>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-semibold text-primary">
-                    {formatPrice(ingredient.current_price)}/{ingredient.unit}
-                  </span>
-                  <div className="text-xs text-gray-500">
-                    재고: 10{ingredient.unit}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Supplier Performance */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">공급업체 성과</h3>
-          <div className="space-y-3">
-            {supplierPerformance.map((supplier, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">{supplier.name}</span>
-                  <div className="text-xs text-gray-500">
-                    {supplier.ingredientCount}개 품목 공급
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-sm font-semibold text-yellow-600">★ {supplier.rating}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    평균 {supplier.avgDeliveryTime}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Analysis */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">분석 요약</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-700">
-              {mockRecipes.filter(r => (r.profit_margin || 0) > 40).length}
-            </div>
-            <div className="text-sm text-green-600">고수익 레시피 (40%+)</div>
-          </div>
-          
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <div className="text-2xl font-bold text-red-700">
-              {priceChanges.filter(p => p.change > 10).length}
-            </div>
-            <div className="text-sm text-red-600">가격 급등 식자재 (10%+)</div>
-          </div>
-          
-          <div className="text-center p-4 bg-primary/5 rounded-lg">
-            <div className="text-2xl font-bold text-primary">
-              {supplierPerformance.filter(s => s.rating >= 4.0).length}
-            </div>
-            <div className="text-sm text-primary">우수 공급업체 (4.0+)</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommendations */}
-      <div className="bg-gradient-to-r from-primary/5 to-indigo-50 p-6 rounded-lg border border-primary/20">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 추천 사항</h3>
-        <div className="space-y-2 text-sm text-gray-700">
-          <p>• 가격이 급등한 식자재는 대체 공급업체 검토를 고려해보세요.</p>
-          <p>• 수익률이 낮은 레시피는 재료 구성이나 판매가 조정이 필요합니다.</p>
-          <p>• 평점이 높은 공급업체와의 거래량 확대를 검토해보세요.</p>
-          <p>• 재고 회전율이 낮은 고가 식자재는 주문량 조정이 필요합니다.</p>
+            );
+          })}
         </div>
       </div>
     </div>
-  )
+  );
+}
+
+/* ─────────────────────────────────────────── */
+/* Sub components                              */
+/* ─────────────────────────────────────────── */
+
+function SummaryCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent: 'primary' | 'success' | 'warning' | 'violet';
+}) {
+  const colors: Record<typeof accent, string> = {
+    primary: 'text-primary-600',
+    success: 'text-success',
+    warning: 'text-warning',
+    violet: 'text-[#8B5CF6]',
+  };
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-soft-1">
+      <div className="text-xs font-semibold text-ink-500">{label}</div>
+      <div
+        className={cn(
+          'mt-2 text-2xl font-extrabold tracking-tight tabular-nums',
+          colors[accent]
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function IndexBadge({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-ink-500">{label}</div>
+      <div
+        className="text-2xl font-extrabold tabular-nums leading-tight"
+        style={{ color }}
+      >
+        {value.toFixed(1)}
+      </div>
+    </div>
+  );
+}
+
+function MoversCard({
+  title,
+  subtitle,
+  up,
+  items,
+}: {
+  title: string;
+  subtitle: string;
+  up: boolean;
+  items: Array<{ name: string; change: number; current: number; category: string }>;
+}) {
+  const Icon = up ? TrendingUp : TrendingDown;
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-soft-1">
+      <div className="mb-3 flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-1.5">
+            <Icon
+              size={16}
+              className={up ? 'text-[#E8412D]' : 'text-[#1F9D55]'}
+              strokeWidth={2.5}
+            />
+            <h3 className="text-base font-bold text-ink-900">{title}</h3>
+          </div>
+          <p className="mt-0.5 text-xs text-ink-500">{subtitle}</p>
+        </div>
+        <span
+          className={cn(
+            'rounded-full px-2.5 py-1 text-[11px] font-bold',
+            up ? 'bg-[#FDE5E1] text-[#E8412D]' : 'bg-[#DEF4E6] text-[#1F9D55]'
+          )}
+        >
+          {items.length}개 품목
+        </span>
+      </div>
+      <div className="flex flex-col gap-1">
+        {items.map((it, i) => (
+          <div
+            key={it.name}
+            className={cn(
+              'flex items-center gap-3 rounded-xl px-3 py-2.5 transition',
+              i === 0 && (up ? 'bg-[#FDE5E1]/40' : 'bg-[#DEF4E6]/40')
+            )}
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-ink-100 text-[11px] font-bold text-ink-700">
+              {i + 1}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-bold text-ink-900">{it.name}</div>
+              <div className="text-[11px] text-ink-500 tabular-nums">
+                {it.category} · {formatPrice(it.current)}
+              </div>
+            </div>
+            <PriceChange change={it.change} chip size="sm" />
+          </div>
+        ))}
+        {items.length === 0 && (
+          <div className="py-6 text-center text-xs text-ink-500">
+            해당 기간에 변동 품목이 없습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Heatmap() {
+  return (
+    <div
+      className="grid gap-1"
+      style={{ gridTemplateColumns: '70px repeat(12, minmax(0, 1fr))' }}
+    >
+      {/* Header row */}
+      <div />
+      {HEATMAP_MONTHS.map((m) => (
+        <div
+          key={m}
+          className="text-center text-[11px] font-semibold text-ink-500"
+        >
+          {m}
+        </div>
+      ))}
+      {/* Body */}
+      {HEATMAP_CATEGORIES.map((cat, ci) => (
+        <ContentRow key={cat} cat={cat} ci={ci} />
+      ))}
+    </div>
+  );
+}
+
+function ContentRow({ cat, ci }: { cat: string; ci: number }) {
+  return (
+    <>
+      <div className="flex items-center text-xs font-bold text-ink-700">{cat}</div>
+      {HEATMAP_DATA[ci].map((v, mi) => (
+        <div
+          key={mi}
+          title={`${cat} ${HEATMAP_MONTHS[mi]}: ${v > 0.66 ? '+' : v < 0.33 ? '−' : ''}${(v * 30).toFixed(1)}%`}
+          className="flex h-10 cursor-pointer items-center justify-center rounded-md text-[11px] font-bold transition-transform hover:scale-110"
+          style={{
+            background: cellColor(v),
+            color: v > 0.5 ? '#fff' : 'hsl(var(--foreground))',
+          }}
+        >
+          {v > 0.7 ? '↑' : v < 0.3 ? '↓' : ''}
+        </div>
+      ))}
+    </>
+  );
 }

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>코스트스캐너 — 공급업체 비교</title>
+<link rel="stylesheet" href="shared/tokens.css" />
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="shared/common.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+function Page() {
+  const [selected, setSelected] = useState('마켓컬리 B2B');
+  const quadPoints = supplierSeed.map(s => ({
+    x: s.price,
+    y: 1 - s.quality,
+    r: 8 + s.reliability * 18,
+    label: s.name.split(' ')[0],
+    color: s.color,
+  }));
+
+  const sel = supplierSeed.find(s => s.name === selected);
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar active="suppliers" />
+      <main style={{ flex: 1, minWidth: 0, background: 'var(--cream)' }}>
+        <TopBar
+          breadcrumb="공급업체 비교"
+          title="공급업체 매트릭스"
+          subtitle="6곳 · 가격과 신뢰도 사이 이상적 위치를 찾아보세요"
+          right={<>
+            <button className="btn btn-outline btn-sm"><Icon name="plus" size={14}/> 공급처 추가</button>
+            <button className="btn btn-brand btn-sm"><Icon name="sparkle" size={14}/> AI 추천</button>
+          </>}
+        />
+        <div style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20 }}>
+          {/* Quadrant */}
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div className="t-h3">가격 vs 품질 매트릭스</div>
+                <div className="t-sm" style={{ marginTop: 2 }}>원 크기 = 배송 신뢰도</div>
+              </div>
+              <div style={{ display: 'flex', gap: 4, background: 'var(--ink-50)', padding: 4, borderRadius: 10 }}>
+                {['전체','채소','육류'].map((r,i) => (
+                  <button key={r} style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, background: i === 0 ? '#fff' : 'transparent', color: i === 0 ? 'var(--ink-900)' : 'var(--ink-500)', boxShadow: i === 0 ? 'var(--sh-1)' : 'none' }}>{r}</button>
+                ))}
+              </div>
+            </div>
+            <ScatterQuadrant points={quadPoints} size={500} xLabel="가격 →" yLabel="품질 →" yRev />
+          </div>
+
+          {/* Ranking */}
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--ink-100)' }}>
+              <div className="t-h3">종합 랭킹</div>
+              <div className="t-sm" style={{ marginTop: 2 }}>가격 40% · 신뢰도 30% · 품질 30%</div>
+            </div>
+            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[...supplierSeed].sort((a,b)=>b.total-a.total).map((s,i) => (
+                <div key={s.name} onClick={() => setSelected(s.name)}
+                  style={{ padding: 14, border: '1px solid ' + (s.name === selected ? 'var(--brand-500)' : 'var(--ink-100)'), background: s.name === selected ? 'var(--brand-50)' : '#fff', borderRadius: 12, cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 999, background: i < 3 ? 'var(--ink-900)' : 'var(--ink-100)', color: i < 3 ? '#fff' : 'var(--ink-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800 }}>{i+1}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>{s.name}</div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                      <span className="t-xs">가격 <b style={{ color: 'var(--ink-800)' }}>{Math.round((1-s.price)*100)}</b></span>
+                      <span className="t-xs">신뢰 <b style={{ color: 'var(--ink-800)' }}>{Math.round(s.reliability*100)}</b></span>
+                      <span className="t-xs">품질 <b style={{ color: 'var(--ink-800)' }}>{Math.round(s.quality*100)}</b></span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink-900)' }} className="tnum">{Math.round(s.total*100)}</div>
+                    <div className="t-xs">종합점수</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Detail */}
+        <div style={{ padding: '0 32px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: sel.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18 }}>{sel.name[0]}</div>
+              <div>
+                <div className="t-h3">{sel.name}</div>
+                <div className="t-xs">서울 · B2B 전용 · 4년 거래</div>
+              </div>
+            </div>
+            <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
+              <Radar
+                axes={['가격', '신뢰', '속도', '품질', '다양성']}
+                values={[1-sel.price, sel.reliability, sel.speed, sel.quality, 0.7]}
+                compareValues={[0.5,0.6,0.6,0.6,0.5]}
+                size={260}
+              />
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24 }}>
+            <div className="t-h3">가격 비교 · 대표 품목</div>
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {ingredientSeed.slice(0,5).map((ing) => (
+                <div key={ing.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 80, fontSize: 13, fontWeight: 600 }}>{ing.name}</span>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--ink-100)', position: 'relative' }}>
+                      <div style={{ width: '70%', height: '100%', background: sel.color, borderRadius: 4 }} />
+                    </div>
+                    <span className="tnum" style={{ fontSize: 13, fontWeight: 700, width: 70, textAlign: 'right' }}>{fmtKRW(ing.price)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16, padding: 12, background: 'var(--down-100)', borderRadius: 10, fontSize: 13, color: 'var(--down-500)', fontWeight: 600 }}>
+              💡 이 공급처로 전환 시 월 ₩124,000 절약 예상
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24 }}>
+            <div className="t-h3">배송 기록</div>
+            <div style={{ marginTop: 14 }}>
+              <BarChart data={[12,15,14,13,16,17,15,14,16,15,17,16]} labels={['1','','3','','5','','7','','9','','11','']} color="var(--brand-500)" height={180} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 14 }}>
+              <div><div className="t-xs">정시율</div><div style={{ fontSize: 22, fontWeight: 800 }} className="tnum">96<span style={{ fontSize: 14, color: 'var(--ink-500)' }}>%</span></div></div>
+              <div><div className="t-xs">평균 지연</div><div style={{ fontSize: 22, fontWeight: 800 }} className="tnum">12<span style={{ fontSize: 14, color: 'var(--ink-500)' }}>분</span></div></div>
+              <div><div className="t-xs">클레임</div><div style={{ fontSize: 22, fontWeight: 800 }} className="tnum">2<span style={{ fontSize: 14, color: 'var(--ink-500)' }}>건</span></div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body>
+</html>

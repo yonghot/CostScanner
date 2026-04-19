@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, BarChart3, Shield, Zap, Users } from 'lucide-react'
+import { ArrowRight, BarChart3, Shield, Zap, Users, Sparkles, TrendingDown } from 'lucide-react'
 import { APP_CONFIG, FEATURES } from '@/constants/app'
 import DashboardPreview from './DashboardPreview'
 import { Button } from '@/components/ui/button'
@@ -9,75 +9,87 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-cream via-background to-primary-50">
       {/* 헤더 */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-gray-900">{APP_CONFIG.name}</span>
+      <header className="sticky top-0 z-30 border-b border-ink-100 bg-white/85 backdrop-blur-sm">
+        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg font-extrabold text-white shadow-brand">
+              C
+            </div>
+            <span className="text-xl font-extrabold tracking-tight text-ink-900">
+              {APP_CONFIG.name}
+            </span>
           </div>
-          
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="#features" className="text-gray-600 hover:text-gray-900">
+
+          <nav className="hidden items-center gap-7 md:flex">
+            <Link href="#features" className="text-sm font-semibold text-ink-600 hover:text-ink-900">
               기능
             </Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
+            <Link href="#pricing" className="text-sm font-semibold text-ink-600 hover:text-ink-900">
               요금제
             </Link>
-            <Link href="#contact" className="text-gray-600 hover:text-gray-900">
+            <Link href="#contact" className="text-sm font-semibold text-ink-600 hover:text-ink-900">
               문의
             </Link>
           </nav>
-          
-          <div className="flex items-center space-x-4">
+
+          <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/auth/login">
-                로그인
-              </Link>
+              <Link href="/auth/login">로그인</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/auth/signup">
-                무료로 시작
-              </Link>
+            <Button size="sm" asChild className="shadow-brand">
+              <Link href="/auth/signup">무료로 시작</Link>
             </Button>
           </div>
         </div>
       </header>
 
       {/* 히어로 섹션 */}
-      <section className="py-24 px-4 lg:py-32">
-        <div className="container mx-auto text-center">
-          <div className="max-w-4xl mx-auto mb-16 space-y-8">
-            <h1 className="text-display text-foreground leading-tight">
-              식자재 원가 관리의<br />
-              <span className="text-gradient">새로운 기준</span>
+      <section className="px-4 py-20 lg:py-28">
+        <div className="container mx-auto">
+          <div className="mx-auto mb-14 max-w-4xl space-y-7 text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-primary-700">
+              <Sparkles size={13} /> 2026 새 기준
+            </div>
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink-900 sm:text-5xl lg:text-[3.5rem]">
+              외식업 원가 관리의
+              <br />
+              <span className="bg-gradient-to-r from-primary to-primary-700 bg-clip-text text-transparent">
+                새로운 시각 언어
+              </span>
             </h1>
-            
-            <p className="text-subtitle leading-relaxed max-w-3xl mx-auto">
-              실시간 가격 모니터링, 지능형 비용 분석, 공급업체 비교까지.<br />
+
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-ink-600 sm:text-lg">
+              실시간 가격 모니터링, 지능형 비용 분석, 공급업체 비교까지.
+              <br className="hidden sm:block" />
               CostScanner로 식자재 원가를 효율적으로 관리하세요.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button size="lg" className="h-12 px-8" asChild>
+
+            <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
+              <Button size="lg" className="h-12 px-8 shadow-brand" asChild>
                 <Link href="/auth/signup">
                   무료로 시작하기
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" className="h-12 px-8" asChild>
-                <Link href="/demo/trial">
-                  체험하기
-                </Link>
+                <Link href="/demo/trial">데모 체험하기</Link>
               </Button>
             </div>
+
+            {/* 신뢰 지표 — 3 통계 */}
+            <div className="mx-auto mt-10 grid max-w-3xl grid-cols-3 gap-3 rounded-2xl border border-ink-100 bg-white/80 p-5 shadow-soft-2 backdrop-blur sm:gap-6 sm:p-6">
+              <TrustStat value="1,247" suffix="" label="활성 매장" />
+              <TrustStat value="₩8.2" suffix="억" label="월 절약 금액" />
+              <TrustStat value="96" suffix="%" label="재계약율" highlight />
+            </div>
           </div>
-          
+
           {/* 대시보드 프리뷰 */}
           <div id="demo" className="relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent rounded-xl"></div>
-            <div className="bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl p-2 shadow-2xl max-w-6xl mx-auto border">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-background/80 to-transparent" />
+            <div className="mx-auto max-w-6xl rounded-2xl border border-ink-100 bg-gradient-to-br from-ink-50 to-cream p-2 shadow-soft-3">
               <DashboardPreview />
             </div>
           </div>
@@ -379,30 +391,30 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-16 max-w-6xl mx-auto">
             <div className="space-y-8">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">연락처 정보</h3>
+                <h3 className="text-xl font-semibold text-ink-900 mb-4">연락처 정보</h3>
                 <div className="space-y-3">
-                  <p className="text-gray-600">
+                  <p className="text-ink-600">
                     <strong>이메일:</strong> hello@costscanner.co.kr
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-ink-600">
                     <strong>전화:</strong> 02-1234-5678
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-ink-600">
                     <strong>운영시간:</strong> 평일 9:00 - 18:00
                   </p>
                 </div>
               </div>
               
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">자주 묻는 질문</h3>
+                <h3 className="text-xl font-semibold text-ink-900 mb-4">자주 묻는 질문</h3>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-gray-900">무료 플랜에는 어떤 제한이 있나요?</h4>
-                    <p className="text-gray-600 text-sm">식자재 10개, 레시피 5개까지 등록 가능하며, 기본적인 가격 모니터링 기능만 제공됩니다.</p>
+                    <h4 className="font-medium text-ink-900">무료 플랜에는 어떤 제한이 있나요?</h4>
+                    <p className="text-ink-600 text-sm">식자재 10개, 레시피 5개까지 등록 가능하며, 기본적인 가격 모니터링 기능만 제공됩니다.</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">데이터는 안전하게 보관되나요?</h4>
-                    <p className="text-gray-600 text-sm">모든 데이터는 암호화되어 안전하게 보관되며, 보안 인증을 받은 인프라를 사용합니다.</p>
+                    <h4 className="font-medium text-ink-900">데이터는 안전하게 보관되나요?</h4>
+                    <p className="text-ink-600 text-sm">모든 데이터는 암호화되어 안전하게 보관되며, 보안 인증을 받은 인프라를 사용합니다.</p>
                   </div>
                 </div>
               </div>
@@ -415,30 +427,30 @@ export default function LandingPage() {
               <CardContent>
               <form className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-ink-700 mb-1">
                     이름
                   </label>
                   <input 
                     type="text" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="성함을 입력해주세요"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-ink-700 mb-1">
                     이메일
                   </label>
                   <input 
                     type="email" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="이메일을 입력해주세요"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-ink-700 mb-1">
                     사업장 유형
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                  <select className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                     <option>개인 카페/식당</option>
                     <option>중형 식당 체인</option>
                     <option>대형 프랜차이즈</option>
@@ -446,12 +458,12 @@ export default function LandingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-ink-700 mb-1">
                     문의 내용
                   </label>
                   <textarea 
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="문의 사항을 자세히 입력해주세요"
                   ></textarea>
                 </div>
@@ -486,20 +498,55 @@ export default function LandingPage() {
       </section>
 
       {/* 푸터 */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-ink-900 py-12 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+          <div className="flex flex-col items-center justify-between md:flex-row">
+            <div className="mb-4 flex items-center space-x-2 md:mb-0">
               <BarChart3 className="h-6 w-6" />
               <span className="text-lg font-semibold">{APP_CONFIG.name}</span>
             </div>
-            
-            <div className="text-gray-400">
+
+            <div className="text-ink-400">
               © 2024 {APP_CONFIG.company}. All rights reserved.
             </div>
           </div>
         </div>
       </footer>
+    </div>
+  )
+}
+
+/**
+ * 히어로 신뢰 지표 — tabular-nums 강제, 큰 숫자 + 캡션
+ */
+function TrustStat({
+  value,
+  suffix,
+  label,
+  highlight = false,
+}: {
+  value: string
+  suffix?: string
+  label: string
+  highlight?: boolean
+}) {
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="flex items-baseline gap-0.5">
+        <span
+          className={`text-2xl font-extrabold tracking-tight tabular-nums sm:text-3xl ${
+            highlight ? 'text-primary' : 'text-ink-900'
+          }`}
+        >
+          {value}
+        </span>
+        {suffix && (
+          <span className="text-base font-bold text-ink-500 sm:text-lg">{suffix}</span>
+        )}
+      </div>
+      <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
+        {label}
+      </div>
     </div>
   )
 }

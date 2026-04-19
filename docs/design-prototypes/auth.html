@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>코스트스캐너 — 로그인</title>
+<link rel="stylesheet" href="shared/tokens.css" />
+<style>
+  body { overflow-x: hidden; }
+  .auth-shell { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+  @media (max-width: 900px) { .auth-shell { grid-template-columns: 1fr; } .auth-visual { display: none; } }
+  .auth-form { padding: 60px; display: flex; flex-direction: column; justify-content: center; max-width: 520px; width: 100%; margin: 0 auto; }
+  .auth-visual { background: var(--ink-900); color: #fff; position: relative; overflow: hidden; padding: 60px; display: flex; flex-direction: column; justify-content: space-between; }
+  .tab-switch { display: inline-flex; padding: 4px; background: var(--ink-50); border-radius: 12px; margin-bottom: 28px; }
+  .tab-switch button { padding: 10px 20px; font-size: 14px; font-weight: 700; border-radius: 8px; transition: all .18s; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-700); margin-bottom: 8px; }
+  .field .input-wrap { position: relative; }
+  .field input { width: 100%; height: 48px; padding: 0 16px 0 44px; border: 1.5px solid var(--ink-200); border-radius: 12px; font-size: 14px; font-family: inherit; transition: all .15s; }
+  .field input:focus { border-color: var(--brand-500); box-shadow: 0 0 0 4px rgba(255,122,0,0.12); }
+  .field input.err { border-color: var(--up-500); }
+  .field .icon-left { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-400); }
+  .field .hint { margin-top: 6px; font-size: 12px; color: var(--ink-500); }
+  .field .err-msg { margin-top: 6px; font-size: 12px; color: var(--up-500); font-weight: 600; }
+  .strength { display: flex; gap: 4px; margin-top: 8px; }
+  .strength div { flex: 1; height: 4px; border-radius: 2px; background: var(--ink-100); transition: background .2s; }
+  .social { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+  .social button { height: 44px; border: 1.5px solid var(--ink-200); border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 13px; background: #fff; transition: all .15s; }
+  .social button:hover { background: var(--ink-50); border-color: var(--ink-300); }
+  .divider { display: flex; align-items: center; gap: 14px; margin: 24px 0 0; color: var(--ink-400); font-size: 12px; font-weight: 600; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--ink-100); }
+  @keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,-12px); } }
+  .glyph { animation: float 4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="shared/common.jsx"></script>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+function ScanPreview() {
+  // Animated mini dashboard — lives in the visual panel
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => {
+    const id = setInterval(() => setTick(t => t+1), 2400);
+    return () => clearInterval(id);
+  }, []);
+  const items = [
+    { name: '양파', color: 'var(--c2)', chg: [0.02,-0.01,0.03,-0.02][tick%4] },
+    { name: '돼지 앞다리', color: 'var(--c6)', chg: [0.05,0.07,0.04,0.06][tick%4] },
+    { name: '마늘', color: 'var(--c1)', chg: [0.12,0.14,0.11,0.13][tick%4] },
+    { name: '대파', color: 'var(--c3)', chg: [-0.08,-0.06,-0.09,-0.07][tick%4] },
+  ];
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: 20, backdropFilter: 'blur(8px)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.6)' }}>LIVE · 서울 · 방금 전</span>
+        <span style={{ width: 8, height: 8, borderRadius: 999, background: '#0FB37E', animation: 'pulse 1.8s infinite' }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.map((it, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: it.color }} />
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{it.name}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: it.chg > 0 ? '#FF8A3C' : '#0FB37E' }}>
+              {it.chg > 0 ? '+' : ''}{(it.chg*100).toFixed(1)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, icon, type = 'text', value, onChange, error, hint, onBlur }) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <div className="input-wrap">
+        <span className="icon-left"><Icon name={icon} size={16} /></span>
+        <input type={type} value={value} onChange={onChange} onBlur={onBlur} className={error ? 'err' : ''} />
+      </div>
+      {error ? <div className="err-msg">{error}</div> : hint ? <div className="hint">{hint}</div> : null}
+    </div>
+  );
+}
+
+function Page() {
+  const [mode, setMode] = useState('login'); // login | signup
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const [biz, setBiz] = useState('');
+  const [touched, setTouched] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const emailErr = touched.email && !/^\S+@\S+\.\S+$/.test(email) ? '이메일 형식이 올바르지 않아요' : '';
+  const pwErr = touched.pw && pw.length < 8 ? '8자 이상 입력해 주세요' : '';
+  const pw2Err = mode === 'signup' && touched.pw2 && pw !== pw2 ? '비밀번호가 일치하지 않아요' : '';
+  const bizErr = mode === 'signup' && touched.biz && biz.length < 2 ? '매장명을 입력해 주세요' : '';
+
+  const pwScore = useMemo(() => {
+    let s = 0;
+    if (pw.length >= 8) s++;
+    if (pw.length >= 12) s++;
+    if (/[A-Z]/.test(pw) || /[a-z]/.test(pw)) s++;
+    if (/\d/.test(pw)) s++;
+    if (/[^\w\s]/.test(pw)) s++;
+    return Math.min(s, 4);
+  }, [pw]);
+
+  const valid = mode === 'login'
+    ? email && pw && !emailErr && !pwErr
+    : email && pw && pw2 && biz && !emailErr && !pwErr && !pw2Err && !bizErr;
+
+  const submit = () => {
+    setTouched({ email: true, pw: true, pw2: true, biz: true });
+    if (!valid) return;
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setDone(true);
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
+    }, 1100);
+  };
+
+  return (
+    <div className="auth-shell">
+      <div className="auth-form">
+        <a href="index.html" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40, textDecoration: 'none' }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--brand-500)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>C</div>
+          <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink-900)' }}>CostScanner</span>
+        </a>
+
+        <div>
+          <div className="t-h1" style={{ fontSize: 32, marginBottom: 10 }}>
+            {mode === 'login' ? '다시 오신 걸 환영해요' : '원가 관리, 이제 시작할까요?'}
+          </div>
+          <div className="t-sm" style={{ marginBottom: 28 }}>
+            {mode === 'login' ? '로그인하고 오늘의 시장 가격을 확인하세요.' : '14일 무료. 카드 등록 없이 바로 시작.'}
+          </div>
+        </div>
+
+        <div className="tab-switch">
+          <button onClick={() => setMode('login')} style={{
+            background: mode === 'login' ? '#fff' : 'transparent',
+            color: mode === 'login' ? 'var(--ink-900)' : 'var(--ink-500)',
+            boxShadow: mode === 'login' ? 'var(--sh-1)' : 'none',
+          }}>로그인</button>
+          <button onClick={() => setMode('signup')} style={{
+            background: mode === 'signup' ? '#fff' : 'transparent',
+            color: mode === 'signup' ? 'var(--ink-900)' : 'var(--ink-500)',
+            boxShadow: mode === 'signup' ? 'var(--sh-1)' : 'none',
+          }}>회원가입</button>
+        </div>
+
+        {mode === 'signup' && (
+          <Field label="매장명" icon="cart" value={biz}
+            onChange={e => setBiz(e.target.value)} onBlur={() => setTouched(t => ({...t, biz:true}))}
+            error={bizErr} hint="고객에게 표시되지 않아요. 리포트 이름으로 쓰입니다." />
+        )}
+
+        <Field label="이메일" icon="user" type="email" value={email}
+          onChange={e => setEmail(e.target.value)} onBlur={() => setTouched(t => ({...t, email:true}))}
+          error={emailErr} />
+
+        <Field label="비밀번호" icon="bell" type="password" value={pw}
+          onChange={e => setPw(e.target.value)} onBlur={() => setTouched(t => ({...t, pw:true}))}
+          error={pwErr} />
+
+        {mode === 'signup' && pw.length > 0 && (
+          <div style={{ marginTop: -10, marginBottom: 18 }}>
+            <div className="strength">
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{ background: i < pwScore ? (pwScore >= 3 ? 'var(--down-500)' : pwScore >= 2 ? 'var(--warn-500)' : 'var(--up-500)') : 'var(--ink-100)' }} />
+              ))}
+            </div>
+            <div className="hint" style={{ marginTop: 6 }}>
+              강도: <b style={{ color: pwScore >= 3 ? 'var(--down-500)' : pwScore >= 2 ? 'var(--warn-500)' : 'var(--up-500)' }}>
+                {['약함','약함','보통','강함','매우 강함'][pwScore]}
+              </b>
+            </div>
+          </div>
+        )}
+
+        {mode === 'signup' && (
+          <Field label="비밀번호 확인" icon="bell" type="password" value={pw2}
+            onChange={e => setPw2(e.target.value)} onBlur={() => setTouched(t => ({...t, pw2:true}))}
+            error={pw2Err} />
+        )}
+
+        {mode === 'login' && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginBottom: 20 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-700)' }}>
+              <input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--brand-500)' }} /> 로그인 유지
+            </label>
+            <a href="#" style={{ color: 'var(--brand-600)', fontWeight: 600, textDecoration: 'none' }}>비밀번호 찾기</a>
+          </div>
+        )}
+
+        <button onClick={submit} disabled={submitting || done} className="btn btn-brand"
+          style={{ height: 52, fontSize: 15, justifyContent: 'center', background: done ? 'var(--down-500)' : 'var(--brand-500)' }}>
+          {done ? <>✓ 완료! 이동 중…</> : submitting ? <>처리 중…</> : (mode === 'login' ? '로그인' : '무료로 시작하기')}
+        </button>
+
+        <div className="divider">또는</div>
+
+        <div className="social">
+          <button>
+            <span style={{ width: 18, height: 18, borderRadius: 4, background: '#FEE500', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900, color: '#000' }}>K</span>
+            카카오로 계속
+          </button>
+          <button>
+            <span style={{ width: 18, height: 18, borderRadius: 4, background: '#03C75A', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900 }}>N</span>
+            네이버로 계속
+          </button>
+        </div>
+
+        <div style={{ marginTop: 32, fontSize: 12, color: 'var(--ink-500)', textAlign: 'center' }}>
+          계속 진행하시면 <a href="#" style={{ color: 'var(--ink-700)' }}>이용약관</a> 및 <a href="#" style={{ color: 'var(--ink-700)' }}>개인정보 처리방침</a>에 동의하게 됩니다.
+        </div>
+      </div>
+
+      <div className="auth-visual">
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(800px 500px at 100% 0%, rgba(255,122,0,0.18), transparent), radial-gradient(500px 400px at 0% 100%, rgba(255,184,0,0.10), transparent)' }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>Live market</div>
+          <div style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.2, marginTop: 14, maxWidth: 420 }}>
+            서울 외식업 시장이<br/>지금 이 순간 움직입니다
+          </div>
+          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.65)', marginTop: 12, maxWidth: 420, lineHeight: 1.6 }}>
+            시장 3곳 · 12곳 공급처 · 실시간 가격 수집. 가입 즉시 당신의 메뉴에 연결됩니다.
+          </div>
+        </div>
+
+        <div style={{ position: 'relative' }} className="glyph">
+          <ScanPreview />
+        </div>
+
+        <div style={{ position: 'relative', display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+          {[
+            { n: '1,247', l: '활성 매장' },
+            { n: '₩8.2억', l: '월 절약 실적' },
+            { n: '96%', l: '재계약율' },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{s.n}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+<style>
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+</style>
+</body>
+</html>

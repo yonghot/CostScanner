@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>코스트스캐너 — 레시피 원가</title>
+<link rel="stylesheet" href="shared/tokens.css" />
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="shared/common.jsx"></script>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const recipes = [
+  { name: '국밥 (대)', price: 9000, items: [
+    { ing: '돼지 사골', qty: '200g', cost: 2200, color: 'var(--c6)' },
+    { ing: '대파', qty: '30g', cost: 71, color: 'var(--c3)' },
+    { ing: '양파', qty: '50g', cost: 93, color: 'var(--c2)' },
+    { ing: '밥 (쌀)', qty: '200g', cost: 480, color: 'var(--c4)' },
+    { ing: '조미료·기타', qty: '-', cost: 320, color: 'var(--ink-400)' },
+  ]},
+  { name: '제육덮밥', price: 8500, items: [
+    { ing: '돼지 삼겹', qty: '150g', cost: 2775, color: 'var(--c6)' },
+    { ing: '양파', qty: '80g', cost: 148, color: 'var(--c2)' },
+    { ing: '고추장', qty: '20g', cost: 180, color: 'var(--c5)' },
+    { ing: '밥', qty: '200g', cost: 480, color: 'var(--c4)' },
+    { ing: '기타', qty: '-', cost: 260, color: 'var(--ink-400)' },
+  ]},
+  { name: '김치찌개', price: 8000, items: [
+    { ing: '돼지 앞다리', qty: '100g', cost: 1450, color: 'var(--c6)' },
+    { ing: '김치', qty: '150g', cost: 540, color: 'var(--c1)' },
+    { ing: '두부', qty: '80g', cost: 320, color: 'var(--c4)' },
+    { ing: '기타', qty: '-', cost: 240, color: 'var(--ink-400)' },
+  ]},
+  { name: '비빔밥', price: 9500, items: [
+    { ing: '소고기', qty: '80g', cost: 2800, color: 'var(--c6)' },
+    { ing: '시금치', qty: '50g', cost: 380, color: 'var(--c3)' },
+    { ing: '계란', qty: '1개', cost: 240, color: 'var(--c2)' },
+    { ing: '밥', qty: '200g', cost: 480, color: 'var(--c4)' },
+    { ing: '기타', qty: '-', cost: 450, color: 'var(--ink-400)' },
+  ]},
+];
+
+function Page() {
+  const [sel, setSel] = useState(0);
+  const r = recipes[sel];
+  const totalCost = r.items.reduce((s,i) => s + i.cost, 0);
+  const margin = r.price - totalCost;
+  const marginPct = margin / r.price;
+  const costPct = totalCost / r.price;
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar active="recipes" />
+      <main style={{ flex: 1, minWidth: 0, background: 'var(--cream)' }}>
+        <TopBar
+          breadcrumb="레시피 원가"
+          title="레시피 원가 DNA"
+          subtitle="각 메뉴의 원가 구조를 유전자처럼 풀어봅니다"
+          right={<>
+            <button className="btn btn-outline btn-sm"><Icon name="file" size={14}/> 원가표 다운로드</button>
+            <button className="btn btn-brand btn-sm"><Icon name="plus" size={14}/> 레시피 추가</button>
+          </>}
+        />
+        <div style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '280px 1fr', gap: 20 }}>
+          {/* Recipe list */}
+          <div className="card" style={{ padding: 12, alignSelf: 'start' }}>
+            <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between' }}>
+              <span className="t-caps">메뉴 {recipes.length}개</span>
+              <Icon name="filter" size={14} style={{ color: 'var(--ink-500)' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+              {recipes.map((re, i) => {
+                const tc = re.items.reduce((s,x) => s + x.cost, 0);
+                const pct = tc / re.price;
+                return (
+                  <div key={re.name} onClick={() => setSel(i)}
+                    style={{ padding: 12, borderRadius: 12, cursor: 'pointer', background: sel === i ? 'var(--ink-900)' : 'transparent', color: sel === i ? '#fff' : 'var(--ink-800)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 700, fontSize: 14 }}>{re.name}</span>
+                      <span className="tnum" style={{ fontSize: 11, fontWeight: 700, color: pct > 0.4 ? 'var(--up-500)' : pct > 0.3 ? 'var(--warn-500)' : 'var(--down-500)', background: sel === i ? '#fff' : 'transparent', padding: '2px 6px', borderRadius: 6 }}>{(pct*100).toFixed(0)}%</span>
+                    </div>
+                    <div style={{ fontSize: 11, marginTop: 2, opacity: 0.65, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>판매 {fmtKRW(re.price)}</span>
+                      <span>원가 {fmtKRW(tc)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Detail */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Summary */}
+            <div className="card" style={{ padding: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                <div>
+                  <div className="t-h2">{r.name}</div>
+                  <div className="t-sm" style={{ marginTop: 4 }}>인기 메뉴 · 하루 평균 42그릇 판매</div>
+                </div>
+                <div style={{ display: 'flex', gap: 20 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className="t-xs">판매가</div>
+                    <div className="tnum" style={{ fontSize: 24, fontWeight: 800 }}>{fmtKRW(r.price)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className="t-xs">원가</div>
+                    <div className="tnum" style={{ fontSize: 24, fontWeight: 800, color: 'var(--up-500)' }}>−{fmtKRW(totalCost)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className="t-xs">이익</div>
+                    <div className="tnum" style={{ fontSize: 24, fontWeight: 800, color: 'var(--down-500)' }}>{fmtKRW(margin)}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* DNA bar */}
+              <div style={{ marginTop: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span className="t-caps">원가 DNA</span>
+                  <span className="tnum t-xs">{(costPct*100).toFixed(1)}% 원가율 / {(marginPct*100).toFixed(1)}% 마진</span>
+                </div>
+                <div style={{ display: 'flex', height: 44, borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--sh-1)' }}>
+                  {r.items.map((it, i) => (
+                    <div key={i} style={{ width: ((it.cost/r.price)*100) + '%', background: it.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700, position: 'relative' }}>
+                      {(it.cost/r.price)*100 > 5 && <span style={{ whiteSpace: 'nowrap' }}>{it.ing}</span>}
+                    </div>
+                  ))}
+                  <div style={{ width: (marginPct*100) + '%', background: 'var(--down-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>이익</div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: 'var(--ink-500)' }}>
+                  <span>₩0</span>
+                  <span>{fmtKRW(r.price)}</span>
+                </div>
+              </div>
+
+              {/* Health indicators */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginTop: 24 }}>
+                {[
+                  { l: '원가율', v: (costPct*100).toFixed(0)+'%', s: costPct < 0.35 ? '건강' : costPct < 0.4 ? '주의' : '위험', t: costPct < 0.35 ? 'down' : costPct < 0.4 ? 'warn' : 'up' },
+                  { l: '마진율', v: (marginPct*100).toFixed(0)+'%', s: '목표 65%', t: 'neut' },
+                  { l: '30일 변동', v: '+3.2%', s: '원가 상승 추세', t: 'up' },
+                  { l: '그릇당 이익', v: fmtKRW(margin,{short:true}), s: '월 +₩' + (margin*42*30/1000).toFixed(0) + 'k', t: 'down' },
+                ].map((k,i) => (
+                  <div key={i} style={{ padding: 16, background: 'var(--ink-50)', borderRadius: 12 }}>
+                    <div className="t-xs">{k.l}</div>
+                    <div className="tnum" style={{ fontSize: 22, fontWeight: 800, marginTop: 4 }}>{k.v}</div>
+                    <span className={cn('chip', 'chip-'+k.t)} style={{ marginTop: 6, fontSize: 10 }}>{k.s}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Ingredient breakdown */}
+            <div className="card" style={{ padding: 0 }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--ink-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div className="t-h3">재료 구성</div>
+                  <div className="t-sm" style={{ marginTop: 2 }}>{r.items.length}개 재료 · 가격 변동은 실시간 반영</div>
+                </div>
+                <button className="btn btn-ghost btn-sm"><Icon name="refresh" size={14}/> 가격 재계산</button>
+              </div>
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>재료</th>
+                    <th style={{ textAlign: 'center' }}>사용량</th>
+                    <th style={{ textAlign: 'right' }}>단가</th>
+                    <th style={{ textAlign: 'right' }}>원가</th>
+                    <th>비중</th>
+                    <th style={{ textAlign: 'right' }}>30일 변동</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.items.map((it, i) => {
+                    const pct = it.cost / totalCost;
+                    const chg = [0.04, -0.02, 0.12, 0.01, 0][i] || 0;
+                    return (
+                      <tr key={i}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 6, height: 24, borderRadius: 3, background: it.color }} />
+                            <span style={{ fontWeight: 600 }}>{it.ing}</span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'center', color: 'var(--ink-600)' }}>{it.qty}</td>
+                        <td className="tnum" style={{ textAlign: 'right' }}>{fmtKRW(Math.round(it.cost * 3))}/kg</td>
+                        <td className="tnum" style={{ textAlign: 'right', fontWeight: 700 }}>{fmtKRW(it.cost)}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 80, height: 6, borderRadius: 3, background: 'var(--ink-100)' }}>
+                              <div style={{ width: pct*100+'%', height: '100%', borderRadius: 3, background: it.color }} />
+                            </div>
+                            <span className="tnum t-xs">{(pct*100).toFixed(0)}%</span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <span className={cn('chip', chg > 0 ? 'chip-up' : chg < 0 ? 'chip-down' : 'chip-neut')}>
+                            {chg > 0 ? '+' : ''}{(chg*100).toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <div style={{ padding: '16px 24px', background: 'var(--brand-50)', borderTop: '1px solid var(--ink-100)', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--brand-500)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="sparkle" size={18} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--brand-700)' }}>AI 원가 개선 제안</div>
+                  <div className="t-sm" style={{ marginTop: 2, color: 'var(--brand-700)' }}>마늘을 가락시장 공급처로 변경하면 그릇당 <b>₩84 절약</b> 가능 · 월 <b>₩105,840</b> 예상</div>
+                </div>
+                <button className="btn btn-brand btn-sm">적용하기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body>
+</html>

@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 export default function SignUpPage() {
   return (
     <AuthLayout
-      title="새 계정 만들기"
-      subtitle="식자재 원가 관리를 위한 첫 걸음을 시작하세요"
+      title="원가 관리, 이제 시작할까요?"
+      subtitle="14일 무료 체험. 카드 등록 없이 바로 시작하세요."
     >
       <Suspense fallback={<div>Loading...</div>}>
         <SignUpForm />

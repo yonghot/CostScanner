@@ -1,0 +1,162 @@
+{
+  "$schema": "./feature_list.schema.json",
+  "project": "CostScanner",
+  "version": "0.1.0",
+  "last_updated": "2026-04-19 (\ub514\uc790\uc778 \ub9ac\ub274\uc5bc Phase 1+2+3 \uc644\ub8cc)",
+  "completion_estimate": "75%",
+  "ultraplanSessionId": "two-pass-3way-2026-04-19",
+  "design_renewal_2026": {
+    "status": "done",
+    "phases": {
+      "phase_1_tokens": "done",
+      "phase_2_chart_components": "done",
+      "phase_3_screens": {
+        "dashboard_overview": "done",
+        "auth_login_signup": "done",
+        "ingredients": "done",
+        "recipes": "done",
+        "suppliers": "done",
+        "reports": "done",
+        "landing": "done"
+      }
+    },
+    "anti_slop_gate": {
+      "forbidden_words_grep": "pass",
+      "arbitrary_hex_check": "pass",
+      "tabular_nums_coverage": "pass",
+      "playwright_visual_audit": "blocked (dev \uc11c\ubc84 \ucc28\ub2e8: Supabase env placeholder)"
+    }
+  },
+  "deploy_ready": false,
+  "deploy_blockers": [
+    "B1: Multi-tenant 격리 부재 (IDOR 위험) - modules에 userId/orgId 강제 주입 필요",
+    "B2: data-collector 스텁 라이브러리 (puppeteer/tesseract no-op) - 실제 구현 또는 기능 플래그",
+    "B3: .env.local placeholder (실제 Supabase 키 미설정)",
+    "B4: Vercel 프로젝트 미연동",
+    "B5: Auth 사용자(admin/demo) 미생성"
+  ],
+  "fixed_in_session": [
+    "F1: Next.js 14.0.4 → 14.2.35 (SSRF/Cache poisoning 패치)",
+    "F2: API 라우트 Zod 입력 검증 추가 (/api/analyze)",
+    "F3: API 라우트 표준 응답 포맷 {success,data?,error?} 적용",
+    "F4: /api/collect는 503 명시적 비활성화 (in-memory scheduler serverless 부적합)"
+  ],
+  "features": [
+    {
+      "id": "F1",
+      "name": "식자재 마스터 관리",
+      "priority": "P0",
+      "status": "completed",
+      "components": [
+        "src/components/dashboard/ingredients/IngredientForm.tsx",
+        "src/components/dashboard/ingredients/IngredientsTable.tsx"
+      ],
+      "db_tables": ["ingredients"],
+      "notes": "CRUD 완료, 카테고리/단위 ENUM 활용"
+    },
+    {
+      "id": "F2",
+      "name": "공급업체 관리",
+      "priority": "P0",
+      "status": "completed",
+      "components": [
+        "src/components/dashboard/suppliers/SupplierForm.tsx",
+        "src/components/dashboard/suppliers/SuppliersTable.tsx"
+      ],
+      "db_tables": ["suppliers"],
+      "notes": "타입(wholesale/retail/...) ENUM, 평점 필드 포함"
+    },
+    {
+      "id": "F3",
+      "name": "가격 추적 및 트렌드 분석",
+      "priority": "P0",
+      "status": "completed",
+      "api_routes": ["/api/analyze (price_trend, supplier_comparison)"],
+      "modules": ["src/modules/cost-analyzer/"],
+      "db_tables": ["price_records"],
+      "notes": "차트는 Recharts 사용"
+    },
+    {
+      "id": "F4",
+      "name": "레시피 원가 계산",
+      "priority": "P0",
+      "status": "completed",
+      "components": [
+        "src/components/dashboard/recipes/RecipeForm.tsx",
+        "src/components/dashboard/recipes/RecipesTable.tsx",
+        "src/components/dashboard/recipes/RecipeDetailsModal.tsx"
+      ],
+      "api_routes": ["/api/analyze (recipe_cost)"],
+      "db_tables": ["recipes", "recipe_ingredients"],
+      "notes": "셀링 가격 대비 마진 계산 가능"
+    },
+    {
+      "id": "F5",
+      "name": "가격 알림",
+      "priority": "P1",
+      "status": "partial",
+      "modules": ["src/modules/notification-service/"],
+      "db_tables": ["price_alerts", "notifications"],
+      "missing": [
+        "실제 알림 트리거 로직",
+        "Resend/Twilio 통합 구현",
+        "알림 설정 UI"
+      ],
+      "notes": "DB 스키마 + 인터페이스만 존재"
+    },
+    {
+      "id": "F6",
+      "name": "데이터 자동 수집",
+      "priority": "P1",
+      "status": "blocked",
+      "api_routes": ["/api/collect (503 비활성화)"],
+      "modules": ["src/modules/data-collector/"],
+      "db_tables": ["collection_jobs"],
+      "missing": [
+        "puppeteer/tesseract 스텁 → 실제 구현 또는 기능 플래그",
+        "in-memory scheduler → DB-backed queue 또는 Vercel Cron 재설계",
+        "스크래핑 대상 사이트 결정 (마켓컬리/오아시스 등)",
+        "OCR (Tesseract.js) 한글 정확도 검증"
+      ],
+      "notes": "Step 3 코드 리뷰에서 Critical 발견: serverless 부적합 + 스텁 라이브러리. 라우트는 503으로 차단."
+    },
+    {
+      "id": "F7",
+      "name": "리포트 생성 (PDF/Excel)",
+      "priority": "P2",
+      "status": "interface_only",
+      "modules": ["src/modules/report-generator/"],
+      "db_tables": ["cost_reports"],
+      "missing": [
+        "PDF 생성 라이브러리 결정 (Puppeteer vs react-pdf)",
+        "Excel 생성 (sheetjs / exceljs)",
+        "리포트 템플릿"
+      ]
+    },
+    {
+      "id": "F8",
+      "name": "멀티 점포 / 프랜차이즈 본부",
+      "priority": "P3",
+      "status": "not_started",
+      "missing": [
+        "DB 멀티 테넌트 모델",
+        "권한 체계 (admin/staff)",
+        "본부 → 점포 데이터 집계 UI"
+      ]
+    },
+    {
+      "id": "F0",
+      "name": "데모 모드 (Trial)",
+      "priority": "P0",
+      "status": "completed",
+      "components": ["src/components/demo/", "src/contexts/DemoContext.tsx"],
+      "notes": "비인증 trial. 회원가입 유도 모달 포함"
+    }
+  ],
+  "summary": {
+    "p0_complete": 5,
+    "p1_partial": 2,
+    "p2_interface_only": 1,
+    "p3_not_started": 1
+  }
+}

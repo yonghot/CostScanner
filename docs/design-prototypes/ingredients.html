@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>코스트스캐너 — 식자재 관리</title>
+<link rel="stylesheet" href="shared/tokens.css" />
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="shared/common.jsx"></script>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const EMOJI = {'채소':'🥬','육류':'🥩','유제품':'🥚','생선':'🐟','조미료':'🧂','과일':'🍎','곡물':'🌾'};
+const CATS = ['전체','채소','육류','생선','유제품','조미료'];
+
+function Page() {
+  const [cat, setCat] = useState('전체');
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(ingredientSeed[0]);
+  const [view, setView] = useState('table');
+
+  const rows = ingredientSeed.filter(r => (cat === '전체' || r.cat === cat) && (!query || r.name.includes(query)));
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar active="ingredients" />
+      <main style={{ flex: 1, minWidth: 0, background: 'var(--cream)' }}>
+        <TopBar
+          breadcrumb="식자재 관리"
+          title="식자재"
+          subtitle="47개 품목 · 12건 활성 알림 · 최근 업데이트 방금 전"
+          right={<>
+            <button className="btn btn-outline btn-sm"><Icon name="download" size={14}/> 내보내기</button>
+            <button className="btn btn-brand btn-sm"><Icon name="plus" size={14}/> 식자재 추가</button>
+          </>}
+        />
+
+        {/* Summary strip */}
+        <div style={{ padding: '24px 32px 0', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {[
+            { label: '이번 주 가격 상승', value: '14개', chip: '+7.2%', chipT: 'up', icon: 'up', color: 'var(--up-500)' },
+            { label: '이번 주 하락', value: '8개', chip: '−4.8%', chipT: 'down', icon: 'down', color: 'var(--down-500)' },
+            { label: '변동 없음', value: '25개', chip: '안정', chipT: 'neut', icon: 'dot', color: 'var(--ink-500)' },
+            { label: '임계값 돌파', value: '3건', chip: '주의', chipT: 'warn', icon: 'zap', color: 'var(--warn-500)' },
+          ].map((s,i) => (
+            <div key={i} className="card" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: s.color + '1a', color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={s.icon} size={18} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="t-xs">{s.label}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 2 }}>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink-900)' }}>{s.value}</span>
+                  <span className={cn('chip', 'chip-' + s.chipT)} style={{ fontSize: 11 }}>{s.chip}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Filters + split view */}
+        <div style={{ padding: '20px 32px 32px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20 }}>
+          {/* Left: Table */}
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--ink-100)', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
+                <Icon name="search" size={14} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--ink-400)' }} />
+                <input className="input" placeholder="식자재명으로 검색..." value={query} onChange={e => setQuery(e.target.value)} style={{ paddingLeft: 34, height: 36, fontSize: 13 }} />
+              </div>
+              <div style={{ display: 'flex', gap: 2, background: 'var(--ink-50)', padding: 3, borderRadius: 8 }}>
+                {['table','grid'].map(v => (
+                  <button key={v} onClick={() => setView(v)} style={{
+                    padding: '6px 10px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+                    background: view === v ? '#fff' : 'transparent',
+                    color: view === v ? 'var(--ink-900)' : 'var(--ink-500)',
+                    boxShadow: view === v ? 'var(--sh-1)' : 'none'
+                  }}>{v === 'table' ? '📋' : '▦'}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ padding: '14px 20px 0', display: 'flex', gap: 6, flexWrap: 'wrap', borderBottom: '1px solid var(--ink-100)' }}>
+              {CATS.map(c => (
+                <button key={c} onClick={() => setCat(c)}
+                  style={{
+                    padding: '8px 14px', fontSize: 13, fontWeight: 600,
+                    borderRadius: 999, marginBottom: 14,
+                    background: cat === c ? 'var(--ink-900)' : 'transparent',
+                    color: cat === c ? '#fff' : 'var(--ink-600)',
+                  }}>{c}</button>
+              ))}
+            </div>
+
+            {view === 'table' ? (
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>품목</th>
+                    <th style={{ textAlign: 'right' }}>현재가</th>
+                    <th style={{ textAlign: 'right' }}>변동</th>
+                    <th>변동성</th>
+                    <th style={{ textAlign: 'center' }}>7일</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => (
+                    <tr key={r.name} onClick={() => setSelected(r)}
+                      style={{ cursor: 'pointer', background: selected.name === r.name ? 'var(--brand-50)' : 'transparent' }}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ink-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>{EMOJI[r.cat] || '🍴'}</div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--ink-900)' }}>{r.name}</div>
+                            <div className="t-xs">{r.cat} · {r.unit}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="tnum" style={{ textAlign: 'right', fontWeight: 700 }}>{fmtKRW(r.price)}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span className={cn('chip', r.change > 0 ? 'chip-up' : r.change < 0 ? 'chip-down' : 'chip-neut')}>
+                          {r.change > 0 ? '+' : ''}{(r.change*100).toFixed(1)}%
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 60, height: 4, borderRadius: 2, background: 'var(--ink-100)', overflow: 'hidden' }}>
+                            <div style={{ width: (r.volatility*100*3) + '%', height: '100%', background: r.volatility > 0.2 ? 'var(--up-500)' : r.volatility > 0.1 ? 'var(--warn-500)' : 'var(--down-500)', borderRadius: 2 }} />
+                          </div>
+                          <span className="t-xs tnum">{(r.volatility*100).toFixed(0)}</span>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'inline-block' }}>
+                          <Sparkline data={r.spark} color={r.change >= 0 ? 'var(--up-500)' : 'var(--down-500)'} width={90} height={26} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                {rows.map(r => (
+                  <div key={r.name} onClick={() => setSelected(r)}
+                    style={{ padding: 14, border: '1px solid ' + (selected.name === r.name ? 'var(--brand-500)' : 'var(--ink-100)'), borderRadius: 12, cursor: 'pointer', background: selected.name === r.name ? 'var(--brand-50)' : '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ fontSize: 20 }}>{EMOJI[r.cat] || '🍴'}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700 }}>{r.name}</div>
+                        <div className="t-xs">{r.cat} · {r.unit}</div>
+                      </div>
+                      <span className={cn('chip', r.change > 0 ? 'chip-up' : r.change < 0 ? 'chip-down' : 'chip-neut')} style={{ fontSize: 10 }}>
+                        {r.change > 0 ? '+' : ''}{(r.change*100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div style={{ marginTop: 10, display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
+                      <span className="tnum" style={{ fontSize: 18, fontWeight: 800 }}>{fmtKRW(r.price)}</span>
+                      <Sparkline data={r.spark} color={r.change >= 0 ? 'var(--up-500)' : 'var(--down-500)'} width={80} height={22} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Detail */}
+          <IngredientDetail r={selected} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function IngredientDetail({ r }) {
+  const suppliers = [
+    { name: '마켓컬리 B2B', price: r.price, delta: 0, best: true },
+    { name: '농협 하나로', price: Math.round(r.price * 1.04), delta: 0.04 },
+    { name: '가락시장', price: Math.round(r.price * 0.96), delta: -0.04, altBest: true },
+    { name: '지역 도매상', price: Math.round(r.price * 1.08), delta: 0.08 },
+  ].sort((a,b) => a.price - b.price);
+
+  return (
+    <div className="card" style={{ padding: 24, position: 'sticky', top: 24, alignSelf: 'start', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--ink-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>{EMOJI[r.cat]}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="chip chip-neut" style={{ fontSize: 10 }}>{r.cat}</span>
+          </div>
+          <div className="t-h2" style={{ marginTop: 4 }}>{r.name}</div>
+        </div>
+      </div>
+
+      <div style={{ padding: '20px 18px', borderRadius: 14, background: 'linear-gradient(135deg, var(--ink-50), #fff)', marginTop: 18 }}>
+        <div className="t-xs">현재 단가 · {r.unit}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
+          <CountUp to={r.price} prefix="₩" className="t-num-xl" />
+        </div>
+        <div style={{ display: 'flex', gap: 14, marginTop: 8 }}>
+          <span className={cn('chip', r.change > 0 ? 'chip-up' : r.change < 0 ? 'chip-down' : 'chip-neut')}>
+            {r.change > 0 && <Icon name="up" size={11} strokeWidth={2.4}/>}
+            {r.change < 0 && <Icon name="down" size={11} strokeWidth={2.4}/>}
+            {fmtPct(r.change)}
+          </span>
+          <span className="t-sm">전일 {fmtKRW(r.prev)}</span>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <div className="t-xs" style={{ marginBottom: 10 }}>30일 추이</div>
+        <div style={{ padding: 12, background: 'var(--ink-50)', borderRadius: 12 }}>
+          <Sparkline data={[...r.spark, ...r.spark.map(v=>v*1.01), ...r.spark.map(v=>v*0.99), ...r.spark]} color="var(--brand-500)" width={380} height={80} strokeWidth={2} />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div className="t-h3">공급업체 실시간 가격</div>
+          <span className="chip chip-brand" style={{ fontSize: 10 }}>4곳 비교</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {suppliers.map((s, i) => (
+            <div key={s.name} style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid ' + (i === 0 ? 'var(--down-500)' : 'var(--ink-100)'), background: i === 0 ? 'var(--down-100)' : '#fff', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 24, height: 24, borderRadius: 999, background: i === 0 ? 'var(--down-500)' : 'var(--ink-200)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{i + 1}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</div>
+                {i === 0 && <div style={{ fontSize: 11, color: 'var(--down-500)', fontWeight: 700 }}>💰 최저가</div>}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div className="tnum" style={{ fontWeight: 700 }}>{fmtKRW(s.price)}</div>
+                {s.delta !== 0 && <div className="t-xs tnum" style={{ color: s.delta > 0 ? 'var(--up-500)' : 'var(--down-500)' }}>{s.delta > 0 ? '+' : ''}{(s.delta*100).toFixed(1)}%</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+        <button className="btn btn-outline btn-sm" style={{ flex: 1 }}><Icon name="bell" size={14}/> 알림 설정</button>
+        <button className="btn btn-brand btn-sm" style={{ flex: 1 }}><Icon name="cart" size={14}/> 최저가로 발주</button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body>
+</html>

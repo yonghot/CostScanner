@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>코스트스캐너 — 리포트</title>
+<link rel="stylesheet" href="shared/tokens.css" />
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="shared/common.jsx"></script>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+// ── Seasonal heatmap (12 months x 6 categories) ──
+function Heatmap() {
+  const cats = ['채소','육류','생선','유제품','곡물','조미료'];
+  const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  // Precomputed "seasonality" — plausible Korean market patterns
+  const data = [
+    [0.7, 0.8, 0.6, 0.3, 0.2, 0.3, 0.5, 0.8, 0.4, 0.2, 0.5, 0.7],  // 채소
+    [0.4, 0.5, 0.5, 0.5, 0.6, 0.7, 0.6, 0.6, 0.7, 0.8, 0.9, 1.0],  // 육류
+    [0.3, 0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 0.9, 0.6, 0.4, 0.3, 0.5],  // 생선
+    [0.5, 0.5, 0.4, 0.4, 0.5, 0.6, 0.7, 0.7, 0.5, 0.4, 0.5, 0.6],
+    [0.3, 0.3, 0.3, 0.4, 0.4, 0.5, 0.6, 0.5, 0.4, 0.3, 0.3, 0.4],
+    [0.4, 0.4, 0.5, 0.5, 0.5, 0.6, 0.7, 0.7, 0.6, 0.5, 0.5, 0.6],
+  ];
+  const cell = (v) => {
+    // v ∈ [0,1]: low=down(green-ish), high=up(orange/red)
+    const t = v;
+    const bg = t < 0.33
+      ? `rgba(15,179,126,${0.15 + t*1.5})`
+      : t < 0.66
+        ? `rgba(255,184,0,${0.15 + (t-0.33)*2})`
+        : `rgba(255,122,0,${0.25 + (t-0.66)*2})`;
+    return bg;
+  };
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '90px repeat(12, 1fr)', gap: 4 }}>
+        <div />
+        {months.map(m => <div key={m} className="t-xs" style={{ textAlign: 'center', fontWeight: 600 }}>{m}</div>)}
+        {cats.map((c, ci) => (
+          <React.Fragment key={c}>
+            <div style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', color: 'var(--ink-700)' }}>{c}</div>
+            {data[ci].map((v, mi) => (
+              <div key={mi} style={{
+                height: 40, borderRadius: 6,
+                background: cell(v),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700, color: v > 0.5 ? '#fff' : 'var(--ink-800)',
+                cursor: 'pointer',
+                transition: 'transform .15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              title={cats[ci] + ' ' + months[mi] + ': ' + (v > 0.66 ? '+' : v < 0.33 ? '−' : '') + (v*30).toFixed(1) + '%'}
+              >
+                {v > 0.7 ? '↑' : v < 0.3 ? '↓' : ''}
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, fontSize: 11, color: 'var(--ink-500)' }}>
+        <span>낮음</span>
+        <div style={{ display: 'flex', gap: 2 }}>
+          {[0.1,0.25,0.4,0.55,0.7,0.85,1].map((v,i) => (
+            <div key={i} style={{ width: 28, height: 12, background: cell(v), borderRadius: 2 }} />
+          ))}
+        </div>
+        <span>높음</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Trend chart (multi-line) ──
+function TrendChart() {
+  const w = 800, h = 280, padL = 50, padR = 20, padT = 20, padB = 36;
+  const iw = w - padL - padR, ih = h - padT - padB;
+  const weeks = 26;
+  // Three categories, indexed at 100
+  const mkSeries = (seed, amp) => {
+    const a = [];
+    let v = 100;
+    for (let i = 0; i < weeks; i++) {
+      v += Math.sin(i/3 + seed) * amp + (i*0.4) + (Math.sin(i*seed)*2);
+      a.push(v);
+    }
+    return a;
+  };
+  const series = [
+    { name: '채소', data: mkSeries(0.5, 3), color: 'var(--c3)' },
+    { name: '육류', data: mkSeries(1.2, 2), color: 'var(--c6)' },
+    { name: '곡물', data: mkSeries(0.2, 1), color: 'var(--c4)' },
+  ];
+  const all = series.flatMap(s => s.data);
+  const min = Math.min(...all), max = Math.max(...all);
+  const x = i => padL + (i/(weeks-1)) * iw;
+  const y = v => padT + (1 - (v-min)/(max-min)) * ih;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%' }}>
+      <defs>
+        {series.map((s,i) => (
+          <linearGradient key={i} id={'g'+i} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={s.color} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={s.color} stopOpacity="0" />
+          </linearGradient>
+        ))}
+      </defs>
+      {/* Grid */}
+      {[0,0.25,0.5,0.75,1].map(t => (
+        <g key={t}>
+          <line x1={padL} x2={w-padR} y1={padT + t*ih} y2={padT + t*ih} stroke="var(--ink-100)" />
+          <text x={padL-8} y={padT + t*ih + 4} fontSize="10" textAnchor="end" fill="var(--ink-500)">
+            {Math.round(max - (max-min)*t)}
+          </text>
+        </g>
+      ))}
+      {/* X labels */}
+      {[0, 6, 12, 18, 24].map(i => (
+        <text key={i} x={x(i)} y={h-padB+18} fontSize="10" textAnchor="middle" fill="var(--ink-500)">
+          {'W' + (i+1)}
+        </text>
+      ))}
+      {/* Areas */}
+      {series.map((s, si) => {
+        const path = s.data.map((v,i) => (i===0?'M':'L') + x(i) + ',' + y(v)).join(' ');
+        const area = path + ` L ${x(weeks-1)},${padT+ih} L ${padL},${padT+ih} Z`;
+        return (
+          <g key={si}>
+            <path d={area} fill={'url(#g'+si+')'} />
+            <path d={path} fill="none" stroke={s.color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+            {s.data.map((v,i) => i === s.data.length-1 && (
+              <g key={i}>
+                <circle cx={x(i)} cy={y(v)} r="4" fill="#fff" stroke={s.color} strokeWidth="2" />
+              </g>
+            ))}
+          </g>
+        );
+      })}
+      {/* Legend */}
+      {series.map((s, si) => (
+        <g key={si} transform={`translate(${w - padR - 240 + si*80}, ${padT})`}>
+          <rect width="10" height="10" rx="2" fill={s.color} />
+          <text x="16" y="9" fontSize="11" fontWeight="600" fill="var(--ink-700)">{s.name}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ── Top movers ──
+function TopMovers({ up }) {
+  const items = up ? [
+    { name: '마늘', cat: '조미료', chg: 0.14, val: 12800 },
+    { name: '양파', cat: '채소', chg: 0.11, val: 1850 },
+    { name: '돼지 삼겹', cat: '육류', chg: 0.085, val: 18500 },
+    { name: '고등어', cat: '생선', chg: 0.072, val: 8900 },
+    { name: '깻잎', cat: '채소', chg: 0.061, val: 3200 },
+  ] : [
+    { name: '대파', cat: '채소', chg: -0.082, val: 2350 },
+    { name: '토마토', cat: '채소', chg: -0.064, val: 4800 },
+    { name: '우유', cat: '유제품', chg: -0.042, val: 2780 },
+    { name: '계란', cat: '유제품', chg: -0.031, val: 5400 },
+    { name: '닭가슴살', cat: '육류', chg: -0.028, val: 12400 },
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {items.map((it,i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: i === 0 ? (up ? 'var(--up-100)' : 'var(--down-100)') : 'transparent' }}>
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--ink-100)', color: 'var(--ink-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{i+1}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>{it.name}</div>
+            <div className="t-xs">{it.cat} · {fmtKRW(it.val)}/kg</div>
+          </div>
+          <span className={cn('chip', up ? 'chip-up' : 'chip-down')} style={{ fontSize: 12 }}>
+            {up ? '+' : ''}{(it.chg*100).toFixed(1)}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Page() {
+  const [range, setRange] = useState('26주');
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar active="reports" />
+      <main style={{ flex: 1, minWidth: 0, background: 'var(--cream)' }}>
+        <TopBar
+          breadcrumb="리포트"
+          title="시장 인사이트"
+          subtitle="당신의 메뉴 · 원가 · 시장 데이터를 교차 분석합니다"
+          right={<>
+            <div style={{ display: 'flex', gap: 2, background: 'var(--ink-50)', padding: 3, borderRadius: 8 }}>
+              {['1개월','3개월','26주','1년'].map(r => (
+                <button key={r} onClick={() => setRange(r)} style={{
+                  padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+                  background: range === r ? '#fff' : 'transparent',
+                  color: range === r ? 'var(--ink-900)' : 'var(--ink-500)',
+                  boxShadow: range === r ? 'var(--sh-1)' : 'none',
+                }}>{r}</button>
+              ))}
+            </div>
+            <button className="btn btn-outline btn-sm"><Icon name="download" size={14}/> PDF 리포트</button>
+          </>}
+        />
+
+        {/* Hero trend */}
+        <div style={{ padding: '28px 32px 0' }}>
+          <div className="card" style={{ padding: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+              <div>
+                <div className="t-caps" style={{ color: 'var(--brand-600)' }}>26주 트렌드 · 카테고리별</div>
+                <div className="t-h2" style={{ marginTop: 6 }}>시장 지수는 어떻게 움직이고 있나요?</div>
+                <div className="t-sm" style={{ marginTop: 4 }}>2024 W27 기준(=100) 상대 가격 지수</div>
+              </div>
+              <div style={{ display: 'flex', gap: 18 }}>
+                <div><div className="t-xs">채소 지수</div><div className="tnum" style={{ fontSize: 26, fontWeight: 800, color: 'var(--c3)' }}>118.4</div></div>
+                <div><div className="t-xs">육류 지수</div><div className="tnum" style={{ fontSize: 26, fontWeight: 800, color: 'var(--c6)' }}>111.2</div></div>
+                <div><div className="t-xs">곡물 지수</div><div className="tnum" style={{ fontSize: 26, fontWeight: 800, color: 'var(--c4)' }}>104.6</div></div>
+              </div>
+            </div>
+            <TrendChart />
+          </div>
+        </div>
+
+        {/* Two column */}
+        <div style={{ padding: '20px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div className="t-h3">📈 가격 급등 품목</div>
+                <div className="t-sm" style={{ marginTop: 2 }}>지난 4주</div>
+              </div>
+              <span className="chip chip-up">14개 품목 상승</span>
+            </div>
+            <TopMovers up />
+          </div>
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div className="t-h3">📉 가격 하락 품목</div>
+                <div className="t-sm" style={{ marginTop: 2 }}>지난 4주</div>
+              </div>
+              <span className="chip chip-down">8개 품목 하락</span>
+            </div>
+            <TopMovers up={false} />
+          </div>
+        </div>
+
+        {/* Heatmap */}
+        <div style={{ padding: '0 32px 32px' }}>
+          <div className="card" style={{ padding: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 24 }}>
+              <div>
+                <div className="t-caps" style={{ color: 'var(--brand-600)' }}>계절성 히트맵</div>
+                <div className="t-h2" style={{ marginTop: 6 }}>언제 무엇이 비싸고, 언제 쌀까요?</div>
+                <div className="t-sm" style={{ marginTop: 4 }}>최근 3년 평균 기준 — 메뉴 기획과 매입 타이밍 힌트</div>
+              </div>
+              <div style={{ padding: '12px 18px', background: 'var(--brand-50)', borderRadius: 12, maxWidth: 320 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Icon name="sparkle" size={14} style={{ color: 'var(--brand-500)' }} />
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--brand-700)' }}>인사이트</span>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--brand-700)', lineHeight: 1.5 }}>
+                  생선은 <b>7~8월</b>에 가장 비싸요. 여름 메뉴를 기획한다면 <b>채소·곡물 중심</b>이 유리합니다.
+                </div>
+              </div>
+            </div>
+            <Heatmap />
+          </div>
+        </div>
+
+        {/* Actionable insights */}
+        <div style={{ padding: '0 32px 40px' }}>
+          <div className="t-h3" style={{ marginBottom: 14 }}>이번 주 액션 아이템</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            {[
+              { tag: '매입 전략', icon: 'cart', color: 'var(--brand-500)', title: '마늘 선구매 권장', desc: '다음 4주간 +12% 상승 예측. 이번 주 내 2주치 재고 확보 시 ₩38만원 절약.' },
+              { tag: '메뉴 조정', icon: 'zap', color: 'var(--warn-500)', title: '국밥 마진 재검토', desc: '돼지 사골 가격이 계속 상승 중. 판매가 500원 조정 or 양 조절 권장.' },
+              { tag: '공급처', icon: 'refresh', color: 'var(--down-500)', title: '농협 하나로로 전환', desc: '양파·대파 최저가 계약 가능. 월 ₩124,000 절약 예상.' },
+            ].map((a, i) => (
+              <div key={i} className="card" style={{ padding: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: a.color + '1a', color: a.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name={a.icon} size={16} />
+                  </div>
+                  <span className="t-caps" style={{ color: a.color }}>{a.tag}</span>
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink-900)', marginBottom: 6 }}>{a.title}</div>
+                <div className="t-sm" style={{ lineHeight: 1.5 }}>{a.desc}</div>
+                <button className="btn btn-ghost btn-sm" style={{ marginTop: 14, padding: 0, color: 'var(--brand-600)' }}>자세히 보기 →</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body>
+</html>
