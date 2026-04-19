@@ -1,279 +1,586 @@
 'use client'
 
-import { useDemoContext } from '@/contexts/DemoContext'
-import { 
-  FileText, 
-  Download, 
-  Calendar,
-  TrendingUp,
+import { useMemo, useState } from 'react'
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import {
+  Download,
+  RefreshCw,
+  ShoppingCart,
+  Sparkles,
   TrendingDown,
-  BarChart3,
-  PieChart,
-  DollarSign
+  TrendingUp,
+  Zap,
 } from 'lucide-react'
-import { formatCurrency, formatPercent } from '@/lib/utils/formatting'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { useState } from 'react'
+import { useDemoContext } from '@/contexts/DemoContext'
+import { PriceChange } from '@/components/ui/charts/PriceChange'
+import {
+  chartGridColor,
+  chartSeriesColors,
+  chartTextColor,
+} from '@/lib/chart-colors'
+import { formatPrice } from '@/lib/utils/formatting'
+import { cn } from '@/lib/utils'
 import SignupPromptModal from '@/components/demo/SignupPromptModal'
+
+// ─── 26주 멀티라인 시뮬레이션 ─────────────────────────────────
+function generateTrendSeries() {
+  const weeks = 26
+  const make = (seed: number, amp: number, base = 100) => {
+    const arr: number[] = []
+    let v = base
+    for (let i = 0; i < weeks; i++) {
+      v += Math.sin(i / 3 + seed) * amp + i * 0.4 + Math.sin(i * seed) * 1.5
+      arr.push(v)
+    }
+    return arr
+  }
+  const veg = make(0.5, 3)
+  const meat = make(1.2, 2)
+  const grain = make(0.2, 1)
+  return Array.from({ length: weeks }, (_, i) => ({
+    week: `W${i + 1}`,
+    채소: Math.round(veg[i] * 10) / 10,
+    육류: Math.round(meat[i] * 10) / 10,
+    곡물: Math.round(grain[i] * 10) / 10,
+  }))
+}
+
+// ─── 계절성 히트맵 데이터 (12개월 × 6 카테고리) ─────────────────
+const HEATMAP_CATEGORIES = ['채소', '육류', '생선', '유제품', '곡물', '조미료']
+const HEATMAP_MONTHS = [
+  '1월', '2월', '3월', '4월', '5월', '6월',
+  '7월', '8월', '9월', '10월', '11월', '12월',
+]
+const HEATMAP_DATA: number[][] = [
+  [0.7, 0.8, 0.6, 0.3, 0.2, 0.3, 0.5, 0.8, 0.4, 0.2, 0.5, 0.7], // 채소
+  [0.4, 0.5, 0.5, 0.5, 0.6, 0.7, 0.6, 0.6, 0.7, 0.8, 0.9, 1.0], // 육류
+  [0.3, 0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 0.9, 0.6, 0.4, 0.3, 0.5], // 생선
+  [0.5, 0.5, 0.4, 0.4, 0.5, 0.6, 0.7, 0.7, 0.5, 0.4, 0.5, 0.6], // 유제품
+  [0.3, 0.3, 0.3, 0.4, 0.4, 0.5, 0.6, 0.5, 0.4, 0.3, 0.3, 0.4], // 곡물
+  [0.4, 0.4, 0.5, 0.5, 0.5, 0.6, 0.7, 0.7, 0.6, 0.5, 0.5, 0.6], // 조미료
+]
+
+const cellColor = (v: number) => {
+  if (v < 0.33) return `rgba(31, 157, 85, ${0.15 + v * 1.5})`
+  if (v < 0.66) return `rgba(242, 169, 0, ${0.15 + (v - 0.33) * 2})`
+  return `rgba(255, 122, 0, ${0.25 + (v - 0.66) * 2})`
+}
+
+type ActionColor = 'primary' | 'warning' | 'success'
+
+const ACTION_ITEMS: Array<{
+  tag: string
+  icon: typeof ShoppingCart
+  color: ActionColor
+  title: string
+  desc: string
+}> = [
+  {
+    tag: '매입 전략',
+    icon: ShoppingCart,
+    color: 'primary',
+    title: '마늘 선구매 권장',
+    desc: '다음 4주간 +12% 상승 예측. 이번 주 내 2주치 재고 확보 시 ₩38만원 절약.',
+  },
+  {
+    tag: '메뉴 조정',
+    icon: Zap,
+    color: 'warning',
+    title: '국밥 마진 재검토',
+    desc: '돼지 사골 가격이 계속 상승 중. 판매가 500원 조정 또는 양 조절을 권장합니다.',
+  },
+  {
+    tag: '공급처 변경',
+    icon: RefreshCw,
+    color: 'success',
+    title: '농협 하나로로 전환',
+    desc: '양파·대파 최저가 계약 가능. 월 ₩124,000 절약이 예상됩니다.',
+  },
+]
+
+const COLOR_BAR: Record<ActionColor, string> = {
+  primary: 'border-l-primary',
+  warning: 'border-l-warning',
+  success: 'border-l-success',
+}
+const COLOR_TEXT: Record<ActionColor, string> = {
+  primary: 'text-primary-600',
+  warning: 'text-warning',
+  success: 'text-success',
+}
+const COLOR_BG: Record<ActionColor, string> = {
+  primary: 'bg-primary-50 text-primary-700',
+  warning: 'bg-warning/10 text-warning',
+  success: 'bg-success/10 text-success',
+}
+
+const PERIODS = ['1개월', '3개월', '26주', '1년'] as const
+type Period = (typeof PERIODS)[number]
 
 export default function DemoReportsPage() {
   const { demoState } = useDemoContext()
-  const [signupPrompt, setSignupPrompt] = useState({ isOpen: false, feature: '', description: '' })
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('26주')
+  const [signupPrompt, setSignupPrompt] = useState({
+    isOpen: false,
+    feature: '',
+    description: '',
+  })
 
-  // Mock report data
-  const monthlyData = [
-    { month: '1월', cost: 2650000, savings: 150000 },
-    { month: '2월', cost: 2750000, savings: 120000 },
-    { month: '3월', cost: 2850000, savings: 250000 },
-    { month: '4월', cost: 2550000, savings: 180000 },
-    { month: '5월', cost: 2950000, savings: 200000 },
-    { month: '6월', cost: 2850000, savings: 250000 }
-  ]
+  // ── 트렌드 데이터 생성 ─────────────────────────────────────
+  const trendData = useMemo(() => generateTrendSeries(), [])
+  const lastTrend = trendData[trendData.length - 1]
 
-  const categoryAnalysis = [
-    { category: '채소류', cost: 850000, percentage: 30, trend: 'down', change: -5.2 },
-    { category: '육류', cost: 1200000, percentage: 42, trend: 'up', change: 8.1 },
-    { category: '수산물', cost: 450000, percentage: 16, trend: 'up', change: 3.5 },
-    { category: '유제품', cost: 200000, percentage: 7, trend: 'down', change: -2.1 },
-    { category: '기타', cost: 150000, percentage: 5, trend: 'up', change: 1.8 }
-  ]
+  // ── 가격 변동 분석 (DemoContext의 ingredient price_history 활용) ──
+  const priceChanges = useMemo(() => {
+    return demoState.ingredients
+      .filter((ing) => Array.isArray(ing.price_history) && ing.price_history.length >= 2)
+      .map((ing) => {
+        const history = ing.price_history
+        const current = history[history.length - 1].price
+        const previous = history[history.length - 2].price
+        const change = previous === 0 ? 0 : (current - previous) / previous
+        return {
+          name: ing.name,
+          change,
+          current,
+          previous,
+          category: ing.category,
+        }
+      })
+      .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+  }, [demoState.ingredients])
 
-  const topIngredients = [
-    { name: '한우등심', cost: 450000, change: 12.5, trend: 'up' },
-    { name: '연어', cost: 320000, change: -8.2, trend: 'down' },
-    { name: '양파', cost: 180000, change: 15.1, trend: 'up' },
-    { name: '대파', cost: 150000, change: -8.5, trend: 'down' },
-    { name: '마늘', cost: 120000, change: 11.1, trend: 'up' }
-  ]
-
-  const handlePeriodSettings = () => {
-    setSignupPrompt({
-      isOpen: true,
-      feature: '기간 설정',
-      description: '데모 버전에서는 리포트 기간 설정 기능이 제한됩니다. 회원가입 후 이용해주세요.'
-    })
-  }
+  const upMovers = priceChanges.filter((p) => p.change > 0).slice(0, 5)
+  const downMovers = priceChanges.filter((p) => p.change < 0).slice(0, 5)
 
   const handleDownloadReport = () => {
     setSignupPrompt({
       isOpen: true,
-      feature: '리포트 다운로드',
-      description: '데모 버전에서는 리포트 다운로드 기능이 제한됩니다. 회원가입 후 이용해주세요.'
+      feature: 'PDF 리포트',
+      description:
+        '데모 버전에서는 리포트 다운로드가 제한됩니다. 회원가입 후 모든 형식으로 내보내실 수 있습니다.',
     })
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
+    <div className="bg-cream min-h-full p-6 lg:p-8 space-y-6">
+      {/* ── 헤더 ─────────────────────────────────── */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">리포트</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            식자재 원가 분석 및 트렌드 리포트
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600">
+            리포트
+          </div>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-ink-900">
+            시장 인사이트
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            당신의 메뉴 · 원가 · 시장 데이터를 교차 분석합니다
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={handlePeriodSettings}>
-            <Calendar className="h-4 w-4 mr-2" />
-            기간 설정
-          </Button>
-          <Button onClick={handleDownloadReport}>
-            <Download className="h-4 w-4 mr-2" />
-            리포트 다운로드
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-0.5 rounded-lg bg-ink-50 p-1">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setSelectedPeriod(p)}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-xs font-bold transition-all',
+                  selectedPeriod === p
+                    ? 'bg-white text-ink-900 shadow-soft-1'
+                    : 'text-ink-500 hover:text-ink-800'
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={handleDownloadReport}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white shadow-brand transition-colors hover:bg-primary-600"
+          >
+            <Download size={14} /> PDF 리포트
+          </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">이달 총 지출</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(2850000)}</p>
-              </div>
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <DollarSign className="h-6 w-6 text-primary" />
-              </div>
+      {/* ── 26주 트렌드 차트 ─────────────────────── */}
+      <div className="rounded-2xl border bg-card p-6 shadow-soft-1">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600">
+              26주 트렌드 · 카테고리별
             </div>
-            <div className="mt-4 flex items-center">
-              <TrendingDown className="h-4 w-4 text-success mr-1" />
-              <span className="text-sm text-success">지난달 대비 -8.2%</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">이달 절약액</p>
-                <p className="text-2xl font-bold text-success-dark">{formatCurrency(250000)}</p>
-              </div>
-              <div className="p-3 bg-success/10 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-success" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <TrendingUp className="h-4 w-4 text-success mr-1" />
-              <span className="text-sm text-success">지난달 대비 +25.0%</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">평균 식자재 단가</p>
-                <p className="text-2xl font-bold text-gray-900">₩4,250</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center">
-              <TrendingUp className="h-4 w-4 text-destructive mr-1" />
-              <span className="text-sm text-destructive">지난달 대비 +3.5%</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">가격 알림</p>
-                <p className="text-2xl font-bold text-warning">8개</p>
-              </div>
-              <div className="p-3 bg-warning/10 rounded-lg">
-                <FileText className="h-6 w-6 text-warning" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="text-sm text-gray-500">활성 알림</span>
-            </div>
-          </CardContent>
-        </Card>
+            <h2 className="mt-1 text-xl font-extrabold text-ink-900">
+              시장 지수는 어떻게 움직이고 있나요?
+            </h2>
+            <p className="mt-1 text-sm text-ink-500">
+              2024 W27 기준(=100) 상대 가격 지수
+            </p>
+          </div>
+          <div className="flex gap-5">
+            <IndexBadge
+              label="채소 지수"
+              value={lastTrend.채소}
+              color={chartSeriesColors[2]}
+            />
+            <IndexBadge
+              label="육류 지수"
+              value={lastTrend.육류}
+              color={chartSeriesColors[5]}
+            />
+            <IndexBadge
+              label="곡물 지수"
+              value={lastTrend.곡물}
+              color={chartSeriesColors[3]}
+            />
+          </div>
+        </div>
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={trendData}
+              margin={{ top: 8, right: 24, left: -16, bottom: 0 }}
+            >
+              <CartesianGrid
+                stroke={chartGridColor}
+                strokeDasharray="3 3"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="week"
+                tick={{ fontSize: 11, fill: chartTextColor }}
+                tickLine={false}
+                axisLine={false}
+                interval={3}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: chartTextColor }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: `1px solid ${chartGridColor}`,
+                  fontSize: 12,
+                }}
+              />
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, paddingTop: 4 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="채소"
+                stroke={chartSeriesColors[2]}
+                strokeWidth={2.4}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="육류"
+                stroke={chartSeriesColors[5]}
+                strokeWidth={2.4}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="곡물"
+                stroke={chartSeriesColors[3]}
+                strokeWidth={2.4}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              월별 지출 추이
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {monthlyData.map((data, index) => (
-                <div key={data.month} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium w-8">{data.month}</span>
-                    <div className="flex-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{width: `${(data.cost / 3000000) * 100}%`}}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{formatCurrency(data.cost)}</div>
-                    <div className="text-xs text-success">절약 {formatCurrency(data.savings)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Category Analysis */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <PieChart className="h-5 w-5 mr-2" />
-              카테고리별 지출 분석
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {categoryAnalysis.map((item, index) => (
-                <div key={item.category} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{item.category}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm">{formatCurrency(item.cost)}</span>
-                      <div className="flex items-center">
-                        {item.trend === 'up' ? (
-                          <TrendingUp className="h-3 w-3 text-destructive" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3 text-success" />
-                        )}
-                        <span className={`text-xs ml-1 ${item.trend === 'up' ? 'text-destructive' : 'text-success'}`}>
-                          {item.trend === 'up' ? '+' : ''}{item.change}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Progress value={item.percentage} className="h-2" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* ── Top Movers (2 컬럼) ──────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <MoversCard
+          title="가격 급등 품목"
+          subtitle="지난 4주"
+          up
+          items={upMovers}
+        />
+        <MoversCard
+          title="가격 하락 품목"
+          subtitle="지난 4주"
+          up={false}
+          items={downMovers}
+        />
       </div>
 
-      {/* Top Ingredients */}
-      <Card>
-        <CardHeader>
-          <CardTitle>주요 식자재 가격 변동</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {topIngredients.map((ingredient, index) => (
-              <div key={ingredient.name} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-sm font-medium">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div className="font-medium">{ingredient.name}</div>
-                    <div className="text-sm text-gray-500">이달 지출</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium">{formatCurrency(ingredient.cost)}</div>
-                  <div className={`text-sm flex items-center ${
-                    ingredient.trend === 'up' ? 'text-destructive' : 'text-success'
-                  }`}>
-                    {ingredient.trend === 'up' ? (
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 mr-1" />
-                    )}
-                    {ingredient.trend === 'up' ? '+' : ''}{ingredient.change}%
-                  </div>
-                </div>
-              </div>
+      {/* ── 계절성 히트맵 ────────────────────────── */}
+      <div className="rounded-2xl border bg-card p-6 shadow-soft-1">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600">
+              계절성 히트맵
+            </div>
+            <h2 className="mt-1 text-xl font-extrabold text-ink-900">
+              언제 무엇이 비싸고, 언제 쌀까요?
+            </h2>
+            <p className="mt-1 text-sm text-ink-500">
+              최근 3년 평균 기준 — 메뉴 기획과 매입 타이밍 힌트
+            </p>
+          </div>
+          <div className="max-w-xs rounded-xl bg-primary-50 px-4 py-3">
+            <div className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold text-primary-700">
+              <Sparkles size={13} /> 인사이트
+            </div>
+            <p className="text-xs leading-relaxed text-primary-700">
+              생선은 <b>7~8월</b>에 가장 비싸요. 여름 메뉴를 기획한다면{' '}
+              <b>채소·곡물 중심</b>이 유리합니다.
+            </p>
+          </div>
+        </div>
+
+        <Heatmap />
+
+        {/* 범례 */}
+        <div className="mt-4 flex items-center gap-2 text-[11px] text-ink-500">
+          <span>낮음</span>
+          <div className="flex gap-0.5">
+            {[0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 0.95].map((v, i) => (
+              <div
+                key={i}
+                className="h-3 w-7 rounded-sm"
+                style={{ background: cellColor(v) }}
+              />
             ))}
           </div>
-        </CardContent>
-      </Card>
+          <span>높음</span>
+        </div>
+      </div>
+
+      {/* ── 액션 아이템 3카드 ────────────────────── */}
+      <div>
+        <h3 className="mb-3 text-lg font-extrabold text-ink-900">
+          이번 주 액션 아이템
+        </h3>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {ACTION_ITEMS.map((a) => {
+            const IconCmp = a.icon
+            return (
+              <div
+                key={a.title}
+                className={cn(
+                  'rounded-2xl border border-l-4 bg-card p-5 shadow-soft-1 transition-shadow hover:shadow-soft-2',
+                  COLOR_BAR[a.color]
+                )}
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-xl',
+                      COLOR_BG[a.color]
+                    )}
+                  >
+                    <IconCmp size={16} />
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[11px] font-bold uppercase tracking-[0.12em]',
+                      COLOR_TEXT[a.color]
+                    )}
+                  >
+                    {a.tag}
+                  </span>
+                </div>
+                <div className="text-base font-extrabold text-ink-900">
+                  {a.title}
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-600">
+                  {a.desc}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleDownloadReport}
+                  className={cn(
+                    'mt-3 inline-flex items-center text-xs font-bold hover:underline',
+                    COLOR_TEXT[a.color]
+                  )}
+                >
+                  자세히 보기 →
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
 
       <SignupPromptModal
         isOpen={signupPrompt.isOpen}
-        onOpenChange={(open) => setSignupPrompt(prev => ({ ...prev, isOpen: open }))}
+        onOpenChange={(open) =>
+          setSignupPrompt((prev) => ({ ...prev, isOpen: open }))
+        }
         feature={signupPrompt.feature}
         description={signupPrompt.description}
       />
     </div>
+  )
+}
+
+/* ─────────────────────────────────────────── */
+/* Sub components                              */
+/* ─────────────────────────────────────────── */
+
+function IndexBadge({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: number
+  color: string
+}) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-ink-500">{label}</div>
+      <div
+        className="text-2xl font-extrabold tabular-nums leading-tight"
+        style={{ color }}
+      >
+        {value.toFixed(1)}
+      </div>
+    </div>
+  )
+}
+
+function MoversCard({
+  title,
+  subtitle,
+  up,
+  items,
+}: {
+  title: string
+  subtitle: string
+  up: boolean
+  items: Array<{
+    name: string
+    change: number
+    current: number
+    category: string
+  }>
+}) {
+  const Icon = up ? TrendingUp : TrendingDown
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-soft-1">
+      <div className="mb-3 flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-1.5">
+            <Icon
+              size={16}
+              className={up ? 'text-[#E8412D]' : 'text-[#1F9D55]'}
+              strokeWidth={2.5}
+            />
+            <h3 className="text-base font-bold text-ink-900">{title}</h3>
+          </div>
+          <p className="mt-0.5 text-xs text-ink-500">{subtitle}</p>
+        </div>
+        <span
+          className={cn(
+            'rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums',
+            up ? 'bg-[#FDE5E1] text-[#E8412D]' : 'bg-[#DEF4E6] text-[#1F9D55]'
+          )}
+        >
+          {items.length}개 품목
+        </span>
+      </div>
+      <div className="flex flex-col gap-1">
+        {items.map((it, i) => (
+          <div
+            key={it.name}
+            className={cn(
+              'flex items-center gap-3 rounded-xl px-3 py-2.5 transition',
+              i === 0 && (up ? 'bg-[#FDE5E1]/40' : 'bg-[#DEF4E6]/40')
+            )}
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-ink-100 text-[11px] font-bold text-ink-700 tabular-nums">
+              {i + 1}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-bold text-ink-900">
+                {it.name}
+              </div>
+              <div className="text-[11px] text-ink-500 tabular-nums">
+                {it.category} · {formatPrice(it.current)}
+              </div>
+            </div>
+            <PriceChange change={it.change} chip size="sm" />
+          </div>
+        ))}
+        {items.length === 0 && (
+          <div className="py-6 text-center text-xs text-ink-500">
+            해당 기간에 변동 품목이 없습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Heatmap() {
+  return (
+    <div
+      className="grid gap-1"
+      style={{ gridTemplateColumns: '70px repeat(12, minmax(0, 1fr))' }}
+    >
+      {/* Header row */}
+      <div />
+      {HEATMAP_MONTHS.map((m) => (
+        <div
+          key={m}
+          className="text-center text-[11px] font-semibold text-ink-500"
+        >
+          {m}
+        </div>
+      ))}
+      {/* Body */}
+      {HEATMAP_CATEGORIES.map((cat, ci) => (
+        <ContentRow key={cat} cat={cat} ci={ci} />
+      ))}
+    </div>
+  )
+}
+
+function ContentRow({ cat, ci }: { cat: string; ci: number }) {
+  return (
+    <>
+      <div className="flex items-center text-xs font-bold text-ink-700">
+        {cat}
+      </div>
+      {HEATMAP_DATA[ci].map((v, mi) => (
+        <div
+          key={mi}
+          title={`${cat} ${HEATMAP_MONTHS[mi]}: ${
+            v > 0.66 ? '+' : v < 0.33 ? '−' : ''
+          }${(v * 30).toFixed(1)}%`}
+          className="flex h-10 cursor-pointer items-center justify-center rounded-md text-[11px] font-bold tabular-nums transition-transform hover:scale-110"
+          style={{
+            background: cellColor(v),
+            color: v > 0.5 ? '#fff' : 'hsl(var(--foreground))',
+          }}
+        >
+          {v > 0.7 ? '↑' : v < 0.3 ? '↓' : ''}
+        </div>
+      ))}
+    </>
   )
 }
